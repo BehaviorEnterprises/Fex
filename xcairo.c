@@ -10,7 +10,8 @@
 #include <X11/XKBlib.h>
 #include <X11/cursorfont.h>
 
-static const char *font = "-*-terminus-bold-*-*-*-14-*-*-*-*-*-*-*";
+//static const char *font = "-*-terminus-bold-*-*-*-14-*-*-*-*-*-*-*";
+static const char *font = "-misc-fixed-medium-r-normal--13-120-75-75-c-70-*-*";
 
 static void buttonpress(XEvent *);
 static void buttonrelease(XEvent *);
