@@ -22,3 +22,7 @@ install:
 	@echo -en "\033[32;1m ==>\033[31m WARNING:\033[0m "
 	@echo -e  "alpha versions should not be installed"
 
+macprep:
+	@sudo port install xorg-libX11 libsndfile cairo fftw-3
+
+
