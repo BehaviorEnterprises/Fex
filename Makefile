@@ -23,6 +23,6 @@ install:
 	@echo -e  "alpha versions should not be installed"
 
 macprep:
-	@sudo port install xorg-libX11 libsndfile cairo fftw-3
+	@sudo port install xorg-libX11 libsndfile cairo fftw-3 pkgconfig
 
 
