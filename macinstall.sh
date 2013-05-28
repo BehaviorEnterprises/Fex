@@ -15,7 +15,7 @@ function err() { out 31 "$@"; }
 function die() { err "Installation cannot continue"; exit 1; }
 
 # check for macports
-if [[ ! $(which port) ]]; then
+if [[ ! $(which port 2>/dev/null) ]]; then
 	err "Unable to find MacPorts" "MacPorts"
 	sub "Follow guide at www.macports.org to install" "www.macports.org"
 	die
