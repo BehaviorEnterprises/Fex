@@ -1,25 +1,25 @@
 
 PROG	=	fex
 VER		=	0.2a
-TARGET	?=	linux
+SOURCE	=	fex.c
 HEADERS =	fex.h
 PREFIX	?=	/usr
+CFLAGS	+=	-Os `pkg-config --cflags sndfile fftw3`
+LDFLAGS	+=	`pkg-config libs sndfile fftw3`
 DEFS	=	-DPROGRAM_NAME=${PROG} -DPROGRAM_VER=${VER}
+TARGET	?=	linux
 
 ifeq "${TARGET}" "linux"
-SOURCE	=	fex.c xcairo.c
-CFLAGS	+=	-Os -Wall -Wno-unused-parameter -Wno-unused-result
-CFLAGS	+=	`pkg-config --cflags sndfile fftw3 x11 cairo`
-LDFLAGS	+=	`pkg-config --libs sndfile fftw3 x11 cairo`
+SOURCE	+=	xcairo.c
+CFLAGS	+=	-Wall `pkg-config --cflags x11 cairo`
+LDFLAGS	+=	`pkg-config --libs x11 cairo`
 else
 ifeq "${TARGET}" "mac"
-SOURCE	=	fex.c osxcg.m
-CFLAGS	+=	-Os -framework Cocoa
-CFLAGS	+=	`pkg-config --cflags sndfile fftw3`
-LDFLAGS	+=	`pkg-config --libs sndfile fftw3`
+SOURCE	+=	osxcg.m
+CFLAGS	+=	-framework Cocoa
 else
 ifeq "${TARGET}" "win"
-$(error No windows port is available)
+$(error No windows port is available yet)
 endif
 endif
 endif

@@ -85,9 +85,9 @@ static NSPoint xy;
 			/* TODO crosshair cursor */
 		}
 	}
-    else {
-        [super keyDown:event];
-    }
+	else {
+		[super keyDown:event];
+	}
 }
 - (void) mouseDown:(NSEvent *)ev {
 	xy = [ev locationInWindow];
