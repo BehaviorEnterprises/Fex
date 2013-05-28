@@ -4,7 +4,7 @@
 
 static int sw, sh, fftw, ffth;
 static int review, restart, ty, bw, wx, wy;
-static id appName, win, winview;
+static id appName, keyer, win, winview;
 static unsigned short int zoom = 0, eraser = 0;
 static float scx, scy, brushw, brushh;
 static unsigned char *alphas, *a;
@@ -48,22 +48,22 @@ static NSPoint xy;
 }
 - (void) keyDown:(NSEvent *)ev {
 	/* SHIFT + ARROW */
-	if ( ([theEvent modifierFlags] & NSAlternateKeyMask) &&
+	if ( ([ev modifierFlags] & NSAlternateKeyMask) &&
 			[[ev characters] isEqualToString:
 			[NSString stringWithFormat:@"%c",NSUpArrowFunctionKey]]) {
 		brushw *= 1.2; brushh *= 1.2;
 	}
-	else if ( ([theEvent modifierFlags] & NSAlternateKeyMask) &&
+	else if ( ([ev modifierFlags] & NSAlternateKeyMask) &&
 			[[ev characters] isEqualToString:
 			[NSString stringWithFormat:@"%c",NSDownArrowFunctionKey]]) {
 		brushw *= 1/1.2; brushh *= 1/1.2;
 	}
-	else if ( ([theEvent modifierFlags] & NSAlternateKeyMask) &&
+	else if ( ([ev modifierFlags] & NSAlternateKeyMask) &&
 			[[ev characters] isEqualToString:
 			[NSString stringWithFormat:@"%c",NSRightArrowFunctionKey]]) {
 		brushw *= 1.2; brushh *= 1/1.2;
 	}
-	else if ( ([theEvent modifierFlags] & NSAlternateKeyMask) &&
+	else if ( ([ev modifierFlags] & NSAlternateKeyMask) &&
 			[[ev characters] isEqualToString:
 			[NSString stringWithFormat:@"%c",NSLeftArrowFunctionKey]]) {
 		brushw *= 1/1.2; brushh *= 1.2;
@@ -71,11 +71,11 @@ static NSPoint xy;
 	/* ARROW */
 	else if ([[ev characters] isEqualToString:
 			[NSString stringWithFormat:@"%c",NSUpArrowFunctionKey]]) {
-		thresh *= 1.2; [keyer restart];
+		thresh *= 1.2; [keyer restart:self];
 	}
 	else if ([[ev characters] isEqualToString:
 			[NSString stringWithFormat:@"%c",NSDownArrowFunctionKey]]) {
-		thresh *= 1/1.2; [keyer restart];
+		thresh *= 1/1.2; [keyer restart:self];
 	}
 	else if ([[ev characters] isEqualToString:@"e"]) {
 		if ( (eraser = !eraser) ) {
@@ -86,7 +86,7 @@ static NSPoint xy;
 		}
 	}
 	else {
-		[super keyDown:event];
+		[super keyDown:ev];
 	}
 }
 - (void) mouseDown:(NSEvent *)ev {
@@ -97,7 +97,7 @@ static NSPoint xy;
 		int i,j;
 		for (i = xy.x - brushw/2.0; i < xy.x+brushw/2.0; i++)
 			for (j = xy.y - brushw/2.0; j < xy.y+brushw/2.0; j++)
-				if ( i >= 0 ** i < fft->ts && j >= 0 && j < fft->fs)
+				if ( i >= 0 && i < fft->ts && j >= 0 && j < fft->fs)
 					fft->amp[i][j] = min;
 		// TODO trigger redraw;
 	}
@@ -119,7 +119,7 @@ int preview_create(int w, int h, FFT *fftp) {
 	[NSApp setMainMenu:menubar];
 	id appMenu = [[NSMenu new] autorelease];
 	/* quit */
-	id keyer = [[[Keyer alloc] init] autorelease];
+	keyer = [[[Keyer alloc] init] autorelease];
 	id mTitle = [@"Quit" stringByAppendingString:appName];
 	id mItem = [[[NSMenuItem alloc] initWithTitle:mTitle
 			action:@selector(quit:) keyEquivalent:@"q"] autorelease];
