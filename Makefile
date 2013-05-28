@@ -5,9 +5,8 @@ SOURCE	=	fex.c
 HEADERS =	fex.h
 PREFIX	?=	/usr
 CFLAGS	+=	-Os `pkg-config --cflags sndfile fftw3`
-LDFLAGS	+=	`pkg-config libs sndfile fftw3`
+LDFLAGS	+=	`pkg-config --libs sndfile fftw3`
 DEFS	=	-DPROGRAM_NAME=${PROG} -DPROGRAM_VER=${VER}
-TARGET	?=	linux
 
 ifeq "${TARGET}" "linux"
 SOURCE	+=	xcairo.c
@@ -24,9 +23,22 @@ endif
 endif
 endif
 
+default:
+	@echo "please specifiy one of the following:"
+	@echo -e "  make linux\n  make mac\n  make win"	
+
 ${PROG}: ${SOURCE} ${HEADERS}
 	@gcc -o ${PROG} ${DEFS} ${SOURCE} ${CFLAGS} ${LDFLAGS}
 	@strip ${PROG}
+
+linux:
+	@TARGET=linux make ${PROG} >/dev/null
+
+mac:
+	@TARGET=mac make ${PROG} >/dev/null
+
+win:
+	@TARGET=win make ${PROG} >/dev/null
 
 clean:
 	@rm -f ${PROG}
