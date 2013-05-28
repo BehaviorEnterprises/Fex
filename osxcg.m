@@ -12,7 +12,6 @@ static FFT *fft;
 static long double ex, tex;
 static CGContextRef ctx = NULL;
 static CGImageRef img;
-static NSPoint xy;
 
 @interface Keyer : NSObject
 @end
@@ -41,10 +40,12 @@ static NSPoint xy;
 - (BOOL) acceptsFirstResponder {
 	return YES;
 }
+- (BOOL) isOpaque {
+	return YES;
+}
 - (void) drawRect:(NSRect)rect {
 	CGContextRef c = [[NSGraphicsContext currentContext] graphicsPort];
 	CGContextDrawImage(c,NSRectToCGRect(rect),img);
-	//CGContextDrawImage(c,CGRectMake(0,0,fftw,ffth),img);
 }
 - (void) keyDown:(NSEvent *)ev {
 	/* SHIFT + ARROW */
@@ -90,28 +91,49 @@ static NSPoint xy;
 	}
 }
 - (void) mouseDown:(NSEvent *)ev {
-	xy = [ev locationInWindow];
+	restart = 1; review = 1;
+	[NSApp stop: nil];
 }
 - (void) mouseDragged:(NSEvent *)ev {
+	NSPoint xy = [ev locationInWindow];
+	xy.x = xy.x * fftw/(float)sw;
+	xy.y = xy.y * ffth/(float)sh;
 	if (eraser) {
 		int i,j;
 		for (i = xy.x - brushw/2.0; i < xy.x+brushw/2.0; i++)
-			for (j = xy.y - brushw/2.0; j < xy.y+brushw/2.0; j++)
+			for (j = xy.y - brushh/2.0; j < xy.y+brushh/2.0; j++)
 				if ( i >= 0 && i < fft->ts && j >= 0 && j < fft->fs)
 					fft->amp[i][j] = min;
-		// TODO trigger redraw;
+		restart = 1; review = 1;
+		[NSApp stop: nil];
 	}
-	xy = [ev locationInWindow];
 }
 @end
+
+void spectro() {
+	NSData *dat = [NSData dataWithBytes:alphas length:fftw*ffth];
+	CGDataProviderRef provider = CGDataProviderCreateWithCFData((CFDataRef) dat);
+	CGImageRef mask = CGImageMaskCreate(fftw,ffth,8,8,fftw,provider,NULL,NO);
+	CGContextSetRGBFillColor(ctx,1.0,1.0,1.0,1.0);
+	CGContextFillRect(ctx,CGRectMake(0,0,fftw,ffth));
+	CGContextSaveGState(ctx);
+	CGContextClipToMask(ctx,CGRectMake(0,0,fftw,ffth),mask);
+	CGContextSetRGBFillColor(ctx,0.0,0.0,0.0,1.0);
+	CGContextFillRect(ctx,CGRectMake(0,0,fftw,ffth));
+	CGImageRelease(mask);
+	CGDataProviderRelease(provider);
+	CGContextRestoreGState(ctx);
+	CGContextSetRGBFillColor(ctx,1.0,1.0,0.0,1.0);
+	[dat release];
+}
 
 int preview_create(int w, int h, FFT *fftp) {
 	fft = fftp; fftw = w; ffth = h;
 	brushw = w/14; brushh = h/14;
 	restart = 0; zoom = eraser = 0;
 	[NSAutoreleasePool new];
-	[NSApplication sharedApplication];
-	id appName = [[NSProcessInfo processInfo] processName];
+	[[NSApplication sharedApplication] autorelease];
+	id appName = [[[NSProcessInfo processInfo] processName] autorelease];
 	/* MENUS & KEY BINDINGS */
 	id menubar = [[NSMenu new] autorelease];
 	id appMenuItem = [[NSMenuItem new] autorelease];
@@ -147,18 +169,24 @@ int preview_create(int w, int h, FFT *fftp) {
 	/* WINDOW */
 	NSRect scr = [[NSScreen mainScreen] frame];
 	sw = (int) scr.size.width; sh = (int) scr.size.height;
-	xy = NSMakePoint(sw/2,sh/2);
 	win = [[[NSWindow alloc] initWithContentRect:NSMakeRect(0,0,sw,sh)
 			styleMask:NSTitledWindowMask backing:NSBackingStoreBuffered defer:NO]
 			autorelease];
 	winview = [[[myView alloc] initWithFrame:NSMakeRect(0,0,w,h)] autorelease];
 	[winview scaleUnitSquareToSize:NSMakeSize(sw/(float)w,sh/(float)h)];
 	[win setContentView:winview];
-	[[win contentView] enterFullScreenMode:[NSScreen mainScreen]
-			withOptions:nil];
+	static hereagain = 0; if ( (++hereagain) == 1 ) {
+		/* this is a ridiculously ugly hack
+			can any mac-heads explain this to me?
+			without the conditional test, this gives
+			a bus error at run time */
+		[winview enterFullScreenMode:[NSScreen mainScreen] withOptions:nil];
+		[win makeKeyAndOrderFront:nil];
+	}
 	[win setTitle:appName];
-	[win makeKeyAndOrderFront:nil];
+	[NSCursor crosshairCursor];
 	[NSApp activateIgnoringOtherApps:YES];
+	//TODO  set focus to winview
 	/* MAKE IMAGE */
 	alphas = malloc(w*h);
 	int i,j;
@@ -174,24 +202,13 @@ int preview_create(int w, int h, FFT *fftp) {
 	ctx = CGBitmapContextCreate(bits, w, h, 8, byte_per_row, cspace,
 			kCGImageAlphaPremultipliedLast);
 	CGColorSpaceRelease(cspace);
-	NSData *dat = [NSData dataWithBytes:alphas length:w*h];
-	CGDataProviderRef provider = CGDataProviderCreateWithCFData((CFDataRef) dat);
-	CGImageRef mask = CGImageMaskCreate(w,h,8,8,w,provider,NULL,NO);
-	CGContextSetRGBFillColor(ctx,1.0,1.0,1.0,1.0);
-	CGContextFillRect(ctx,CGRectMake(0,0,w,h));
-	CGContextClipToMask(ctx,CGRectMake(0,0,w,h),mask);
-	CGContextSetRGBFillColor(ctx,0.0,0.0,0.0,1.0);
-	CGContextFillRect(ctx,CGRectMake(0,0,w,h));
-	CGImageRelease(mask);
-	CGDataProviderRelease(provider);
-	CGContextSetRGBFillColor(ctx,1.0,0.9,0.0,1.0);
-	[NSCursor crosshairCursor];
+	spectro();
 	return 0;
 }
 
 int preview_peak(int x, int y) {
-	//CGContextMoveToPoint(ctx,x,y);
-	CGContextAddArc(ctx,x,y,0.35,0,2*M_PI,0);
+	CGContextMoveToPoint(ctx,x,y);
+	CGContextAddArc(ctx,x,y,0.5,0,2*M_PI,0);
 	CGContextClosePath(ctx);
 	return 0;
 }
@@ -202,6 +219,7 @@ int preview_test(long double ee, long double te) {
 	[winview setNeedsDisplay:YES];
 	ex = ee; tex = te;
 	[NSApp run];
+	spectro();
 	return review;
 }
 
