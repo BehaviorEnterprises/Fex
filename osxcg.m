@@ -39,7 +39,7 @@ static NSPoint xy;
 @end
 @implementation myView
 - (BOOL) acceptsFirstResponder {
-    return YES;
+	return YES;
 }
 - (void) drawRect:(NSRect)rect {
 	CGContextRef c = [[NSGraphicsContext currentContext] graphicsPort];
@@ -49,22 +49,22 @@ static NSPoint xy;
 - (void) keyDown:(NSEvent *)ev {
 	/* SHIFT + ARROW */
 	if ( ([theEvent modifierFlags] & NSAlternateKeyMask) &&
-    		[[ev characters] isEqualToString:
+			[[ev characters] isEqualToString:
 			[NSString stringWithFormat:@"%c",NSUpArrowFunctionKey]]) {
 		brushw *= 1.2; brushh *= 1.2;
 	}
 	else if ( ([theEvent modifierFlags] & NSAlternateKeyMask) &&
-    		[[ev characters] isEqualToString:
+			[[ev characters] isEqualToString:
 			[NSString stringWithFormat:@"%c",NSDownArrowFunctionKey]]) {
 		brushw *= 1/1.2; brushh *= 1/1.2;
 	}
 	else if ( ([theEvent modifierFlags] & NSAlternateKeyMask) &&
-    		[[ev characters] isEqualToString:
+			[[ev characters] isEqualToString:
 			[NSString stringWithFormat:@"%c",NSRightArrowFunctionKey]]) {
 		brushw *= 1.2; brushh *= 1/1.2;
 	}
 	else if ( ([theEvent modifierFlags] & NSAlternateKeyMask) &&
-    		[[ev characters] isEqualToString:
+			[[ev characters] isEqualToString:
 			[NSString stringWithFormat:@"%c",NSLeftArrowFunctionKey]]) {
 		brushw *= 1/1.2; brushh *= 1.2;
 	}
