@@ -1,6 +1,6 @@
 
 PROG	=	fex
-VER		=	0.2a
+VER		=	0.3a
 SOURCE	=	fex.c
 HEADERS =	fex.h
 PREFIX	?=	/usr
@@ -44,7 +44,7 @@ clean:
 	@rm -f ${PROG}
 
 tarball: clean
-	@rm -f ${PROG}-${VER}.tar.gz
+	@rm -f ${PROG}-*.tar.gz
 	@tar -czf ${PROG}-${VER}.tar.gz *
 
 install: ${PROG}
