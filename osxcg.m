@@ -4,7 +4,7 @@
 
 static int sw, sh, fftw, ffth;
 static int review, restart, ty, bw, wx, wy;
-static id appName, keyer, win, winview;
+static id appName, keyer, win, winview, tracker;
 static unsigned short int zoom = 0, eraser = 0;
 static float scx, scy, brushw, brushh;
 static unsigned char *alphas, *a;
@@ -12,40 +12,59 @@ static FFT *fft;
 static long double ex, tex;
 static CGContextRef ctx = NULL;
 static CGImageRef img;
+static char bar[3][256];
 
 @interface Keyer : NSObject
 @end
 @implementation Keyer
-- (void) quit:(id)sender {
-	restart = 0; review = 0;
-	[NSApp stop: nil];
-}
-- (void) restart:(id)sender {
-	restart = 1; review = 0;
-	[NSApp stop: nil];
-}
-- (void) help:(id)sender {
-	// TODO
-	printf("Help menu\n");
-}
-- (void) zoom:(id)sender {
-	zoom = !zoom;
-	// TODO trigger redraw?
-}
+- (void) quit:(id)sender { restart = 0; review = 0; [NSApp stop: nil]; }
+- (void) restart:(id)sender { restart = 1; review = 0; [NSApp stop: nil]; }
+- (void) help:(id)sender { /* TODO */ printf("Help menu\n"); }
+- (void) zoom:(id)sender { zoom = !zoom; /* TODO trigger redraw? */ }
 @end
 
 @interface myView : NSView
 @end
 @implementation myView
-- (BOOL) acceptsFirstResponder {
-	return YES;
-}
-- (BOOL) isOpaque {
-	return YES;
-}
+- (BOOL)acceptsFirstMouse { return YES; }
+- (BOOL) acceptsFirstResponder { return YES; }
+- (BOOL) isOpaque { return YES; }
 - (void) drawRect:(NSRect)rect {
+	/* draw rendered spectrogram with points */
 	CGContextRef c = [[NSGraphicsContext currentContext] graphicsPort];
 	CGContextDrawImage(c,NSRectToCGRect(rect),img);
+	/* calculate text widths */
+	int w1,w2;
+	GContextSelectFont(c,"Helvetica-Bold",10,kCGEncodingMacRoman);
+	CGPoint p1,p2;
+	p1.x = 10; p1.y = ffth-10;
+	CGContextSetTextPosition(c,p1.x,p1,y);
+	CGContextShowText(c,bar[2],strlen(bar[2]));
+	p2 = CGContextGetTextPosition(c);
+	w2 = p2.x-p1.x;
+	CGContextSetTextPosition(c,p1.x,p1,y);
+	CGContextShowText(c,bar[2],strlen(bar[1]));
+	p2 = CGContextGetTextPosition(c);
+	w1 = p2.x-p1.x;
+	/* draw top bar */
+	CGContextSetRGBFillColor(ctx,0.0,0.0,0.0,1.0);
+	CGContextFillRect(ctx,CGRectMake(0,ffth,fftw,10));
+	/* draw text */
+	CGContextSetRGBFillColor(ctx,1.0,1.0,1.0,1.0);
+	CGContextSetTextPosition(c,p1.x,p1,y);
+	CGContextShowText(c,bar[0],strlen(bar[0]));
+	CGContextSetTextPosition(c,(fftw-w1)/2,p1.y);
+	CGContextShowText(c,bar[1],strlen(bar[1]));
+	CGContextSetTextPosition(c,fftw-w2-10,p1.y);
+	CGContextShowText(c,bar[2],strlen(bar[2]));
+	/* eraser block */
+	if (eraser) {
+		p1 = [NSEvent mouseLocation];
+		p1.x -= brushw/2;
+		p1.y -= brushh/2;
+		CGContextSetRGBFillColor(ctx,0.0,1.0,1.0,0.4);
+		CGContextFillRect(ctx,CGRectMake(p1.x,p1.y,brushh,brushw));
+	}
 }
 - (void) keyDown:(NSEvent *)ev {
 	/* SHIFT + ARROW */
@@ -108,11 +127,15 @@ static CGImageRef img;
 		[NSApp stop: nil];
 	}
 }
+- (void) mouseMoved:(NSEvent *)ev {
+	[self setNeedsDisplay:YES];
+}
 @end
 
 void spectro() {
 	NSData *dat = [NSData dataWithBytes:alphas length:fftw*ffth];
-	CGDataProviderRef provider = CGDataProviderCreateWithCFData((CFDataRef) dat);
+	CGDataProviderRef provider =
+			CGDataProviderCreateWithCFData((CFDataRef) dat);
 	CGImageRef mask = CGImageMaskCreate(fftw,ffth,8,8,fftw,provider,NULL,NO);
 	CGContextSetRGBFillColor(ctx,1.0,1.0,1.0,1.0);
 	CGContextFillRect(ctx,CGRectMake(0,0,fftw,ffth));
@@ -170,12 +193,12 @@ int preview_create(int w, int h, FFT *fftp) {
 	NSRect scr = [[NSScreen mainScreen] frame];
 	sw = (int) scr.size.width; sh = (int) scr.size.height;
 	win = [[[NSWindow alloc] initWithContentRect:NSMakeRect(0,0,sw,sh)
-			styleMask:NSTitledWindowMask backing:NSBackingStoreBuffered defer:NO]
-			autorelease];
+			styleMask:NSTitledWindowMask backing:NSBackingStoreBuffered
+			defer:NO] autorelease];
 	winview = [[[myView alloc] initWithFrame:NSMakeRect(0,0,w,h)] autorelease];
 	[winview scaleUnitSquareToSize:NSMakeSize(sw/(float)w,sh/(float)h)];
 	[win setContentView:winview];
-	static hereagain = 0; if ( (++hereagain) == 1 ) {
+	static int hereagain = 0; if ( (++hereagain) == 1 ) {
 		/* this is a ridiculously ugly hack
 			can any mac-heads explain this to me?
 			without the conditional test, this gives
@@ -186,7 +209,10 @@ int preview_create(int w, int h, FFT *fftp) {
 	[win setTitle:appName];
 	[NSCursor crosshairCursor];
 	[NSApp activateIgnoringOtherApps:YES];
-	//TODO  set focus to winview
+	tracker = [[[NSTrackingArea alloc] initWithRect:NSMakeRect(0,0,w,h)
+			options:NSTrackingMouseMoved owner:winview userInfo:nil]
+			autorelease];
+	[winview addTrackingArea:tracker];
 	/* MAKE IMAGE */
 	alphas = malloc(w*h);
 	int i,j;
@@ -197,7 +223,8 @@ int preview_create(int w, int h, FFT *fftp) {
 	}
 	int byte_per_row = w*4;
 	int bytes = h*byte_per_row;
-	CGColorSpaceRef cspace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB);
+	CGColorSpaceRef cspace =
+			CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB);
 	void *bits = malloc(bytes);
 	ctx = CGBitmapContextCreate(bits, w, h, 8, byte_per_row, cspace,
 			kCGImageAlphaPremultipliedLast);
@@ -216,6 +243,7 @@ int preview_peak(int x, int y) {
 int preview_test(long double ee, long double te) {
 	CGContextFillPath(ctx);
 	img = CGBitmapContextCreateImage(ctx);
+	CGContextSetRGBFillColor(ctx,0.0,0.0,0.0,1.0);
 	[winview setNeedsDisplay:YES];
 	ex = ee; tex = te;
 	[NSApp run];
