@@ -18,7 +18,7 @@ static void buttonrelease(XEvent *);
 static void expose(XEvent *);
 static void keypress(XEvent *);
 static void motionnotify(XEvent *);
-static void xcairo_help();
+//static void xcairo_help();
 
 static Display *dpy;
 static int scr, sw, sh, sx, sy, fftw, ffth, stride;
@@ -43,38 +43,13 @@ static void (*handler[LASTEvent])(XEvent *) = {
 	[MotionNotify]	= motionnotify,
 };
 
-void xcairo_help(){
-	cairo_surface_t *t = cairo_xlib_surface_create(dpy,buf,
-			DefaultVisual(dpy,scr),sw,sh);
-	cairo_t *h = cairo_create(t);
-	cairo_surface_destroy(t);
-	double x = (sw-6*bw)/1600.0, y = (sh-6*bw)/750.0;
-	cairo_translate(h,3*bw,3*bw);
-	cairo_scale(h,x,y);
-	cairo_set_line_join(h,CAIRO_LINE_JOIN_ROUND);
-	cairo_set_line_width(h,12.0);
-	cairo_surface_t *src = cairo_image_surface_create_from_png("help.png");
-	cairo_set_source_surface(h,src,0,0);
-	cairo_paint(h);
-	cairo_surface_destroy(src);
-	cairo_set_source_rgba(h,0.0,0.1,0.2,0.8);
-	cairo_rectangle(h,0,0,1600,750);
-	cairo_stroke(h);
-	cairo_destroy(h);
-	XCopyArea(dpy,buf,win,gc,0,0,sw,sh,0,0);
-	XFlush(dpy);
-	XEvent e;
-	XMaskEvent(dpy,KeyPressMask,&e);
-	XSync(dpy,True);
-}
-
 void buttonpress(XEvent *e) {
 	XSync(dpy,True);
 }
 
 void buttonrelease(XEvent *e) {
 	XSync(dpy,True);
-	running = False; /* trigger recalculation of peaks */
+	running = False;
 }
 
 void draw() {
@@ -125,7 +100,7 @@ void keypress(XEvent *e){
 	else if (key == XK_Up) { thresh *= 1.2; running = False; }
 	else if (key == XK_Down) { thresh *= 1/1.2; running = False; }
 	else if (key == XK_z) zoom = !zoom;
-	else if (key == XK_h) xcairo_help();
+	//else if (key == XK_h) xcairo_help();
 	else if (key == XK_e) {
 		if ( (eraser = !eraser) ) XDefineCursor(dpy,win,invisible_cursor);
 		else XDefineCursor(dpy,win,crosshair_cursor);
@@ -146,7 +121,7 @@ void motionnotify(XEvent *e){
 				if (i >= 0 && i < fft->ts && j >= 0 && j < fft->fs)
 					fft->amp[i][j] = min;
 	}
-	draw();
+	running = False;
 }
 
 int preview_create(int w, int h, FFT *fftp) {
@@ -180,7 +155,7 @@ int preview_create(int w, int h, FFT *fftp) {
 	buf = XCreatePixmap(dpy,win,sw,sh,DefaultDepth(dpy,scr));
 	pbuf = XCreatePixmap(dpy,win,sw,sh,DefaultDepth(dpy,scr));
 	zmap = XCreatePixmap(dpy,win,sw/10,sh/10,DefaultDepth(dpy,scr));
-	XMapWindow(dpy,win);
+	XMapRaised(dpy,win);
 	XSetForeground(dpy,gc,BlackPixel(dpy,scr));
 	XFillRectangle(dpy,buf,gc,0,0,sw,sh);
 	XSetForeground(dpy,gc,WhitePixel(dpy,scr));

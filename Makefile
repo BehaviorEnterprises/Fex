@@ -24,7 +24,7 @@ endif
 endif
 
 default:
-	@echo "please specifiy one of the following:"
+	@echo "please specifiy one of the following targets:"
 	@echo -e "  make linux\n  make mac\n  make win"	
 
 ${PROG}: ${SOURCE} ${HEADERS}
