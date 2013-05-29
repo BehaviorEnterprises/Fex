@@ -12,7 +12,7 @@ static FFT *fft;
 static long double ex, tex;
 static CGContextRef ctx = NULL;
 static CGImageRef img;
-static char bar[3][256];
+static char bar[2][256];
 
 @interface Keyer : NSObject
 @end
@@ -34,36 +34,42 @@ static char bar[3][256];
 	CGContextRef c = [[NSGraphicsContext currentContext] graphicsPort];
 	CGContextDrawImage(c,NSRectToCGRect(rect),img);
 	/* calculate text widths */
+	NSPoint p = [NSEvent mouseLocation];
+	snprintf(bar[0],255,"time: %.3lfs | freq: %.3lfkhz",
+			fft->time[(int)(p.x*fftw/(float)sw)],
+			fft->freq[(int)(p.y*ffth/(float)sh)]);
+	snprintf(bar[1],255,"path: %.2Lf | time: %.2Lf | FE: %.2Lf",
+			ex,tex,ex/tex);
 	int w1,w2;
-	GContextSelectFont(c,"Helvetica-Bold",10,kCGEncodingMacRoman);
+	CGContextSelectFont(c,"Helvetica-Bold",3,kCGEncodingMacRoman);
 	CGPoint p1,p2;
-	p1.x = 10; p1.y = ffth-10;
-	CGContextSetTextPosition(c,p1.x,p1,y);
-	CGContextShowText(c,bar[2],strlen(bar[2]));
+	p1.x = 2; p1.y = ffth-3;
+	CGContextSetTextPosition(c,p1.x,p1.y);
+	CGContextShowText(c,bar[1],strlen(bar[1]));
 	p2 = CGContextGetTextPosition(c);
 	w2 = p2.x-p1.x;
-	CGContextSetTextPosition(c,p1.x,p1,y);
-	CGContextShowText(c,bar[2],strlen(bar[1]));
+	CGContextSetTextPosition(c,p1.x,p1.y);
+	CGContextShowText(c,name,strlen(name));
 	p2 = CGContextGetTextPosition(c);
 	w1 = p2.x-p1.x;
 	/* draw top bar */
-	CGContextSetRGBFillColor(ctx,0.0,0.0,0.0,1.0);
-	CGContextFillRect(ctx,CGRectMake(0,ffth,fftw,10));
+	CGContextSetRGBFillColor(c,0.0,0.0,0.0,1.0);
+	CGContextFillRect(c,CGRectMake(0,ffth-4,fftw,4));
 	/* draw text */
-	CGContextSetRGBFillColor(ctx,1.0,1.0,1.0,1.0);
-	CGContextSetTextPosition(c,p1.x,p1,y);
+	CGContextSetTextDrawingMode (c, kCGTextFill); 
+	CGContextSetRGBFillColor(c,1.0,1.0,1.0,1.0);
+	CGContextSetTextPosition(c,p1.x,p1.y);
 	CGContextShowText(c,bar[0],strlen(bar[0]));
 	CGContextSetTextPosition(c,(fftw-w1)/2,p1.y);
+	CGContextShowText(c,name,strlen(name));
+	CGContextSetTextPosition(c,fftw-w2-2,p1.y);
 	CGContextShowText(c,bar[1],strlen(bar[1]));
-	CGContextSetTextPosition(c,fftw-w2-10,p1.y);
-	CGContextShowText(c,bar[2],strlen(bar[2]));
 	/* eraser block */
 	if (eraser) {
-		p1 = [NSEvent mouseLocation];
-		p1.x -= brushw/2;
-		p1.y -= brushh/2;
-		CGContextSetRGBFillColor(ctx,0.0,1.0,1.0,0.4);
-		CGContextFillRect(ctx,CGRectMake(p1.x,p1.y,brushh,brushw));
+		p.x -= brushw/2;
+		p.y -= brushh/2;
+		CGContextSetRGBFillColor(c,0.0,1.0,1.0,0.4);
+		CGContextFillRect(c,CGRectMake(p.x,p.y,brushh,brushw));
 	}
 }
 - (void) keyDown:(NSEvent *)ev {
@@ -128,6 +134,7 @@ static char bar[3][256];
 	}
 }
 - (void) mouseMoved:(NSEvent *)ev {
+printf("mouseMoved\n");
 	[self setNeedsDisplay:YES];
 }
 @end
@@ -209,10 +216,12 @@ int preview_create(int w, int h, FFT *fftp) {
 	[win setTitle:appName];
 	[NSCursor crosshairCursor];
 	[NSApp activateIgnoringOtherApps:YES];
+/*
 	tracker = [[[NSTrackingArea alloc] initWithRect:NSMakeRect(0,0,w,h)
 			options:NSTrackingMouseMoved owner:winview userInfo:nil]
 			autorelease];
 	[winview addTrackingArea:tracker];
+*/
 	/* MAKE IMAGE */
 	alphas = malloc(w*h);
 	int i,j;
