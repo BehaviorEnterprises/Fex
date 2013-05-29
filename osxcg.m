@@ -19,6 +19,7 @@ static char bar[2][256];
 @implementation Keyer
 - (void) quit:(id)sender { restart = 0; review = 0; [NSApp stop: nil]; }
 - (void) restart:(id)sender { restart = 1; review = 0; [NSApp stop: nil]; }
+- (void) review:(id)sender { restart = 1; review = 1; [NSApp stop: nil]; }
 - (void) help:(id)sender { /* TODO */ printf("Help menu\n"); }
 - (void) zoom:(id)sender { zoom = !zoom; /* TODO trigger redraw? */ }
 @end
@@ -26,8 +27,9 @@ static char bar[2][256];
 @interface myView : NSView
 @end
 @implementation myView
-- (BOOL)acceptsFirstMouse { return YES; }
+- (BOOL) acceptsFirstMouse:(NSEvent *)ev { return YES; }
 - (BOOL) acceptsFirstResponder { return YES; }
+- (BOOL) becomeFirstMouse { return YES; }
 - (BOOL) isOpaque { return YES; }
 - (void) drawRect:(NSRect)rect {
 	/* draw rendered spectrogram with points */
@@ -35,9 +37,9 @@ static char bar[2][256];
 	CGContextDrawImage(c,NSRectToCGRect(rect),img);
 	/* calculate text widths */
 	NSPoint p = [NSEvent mouseLocation];
+	p.x *= fftw/(float)sw; p.y *= ffth/(float)sh;
 	snprintf(bar[0],255,"time: %.3lfs | freq: %.3lfkhz",
-			fft->time[(int)(p.x*fftw/(float)sw)],
-			fft->freq[(int)(p.y*ffth/(float)sh)]);
+			fft->time[(int)p.x], fft->freq[(int)p.y]);
 	snprintf(bar[1],255,"path: %.2Lf | time: %.2Lf | FE: %.2Lf",
 			ex,tex,ex/tex);
 	int w1,w2;
@@ -66,75 +68,56 @@ static char bar[2][256];
 	CGContextShowText(c,bar[1],strlen(bar[1]));
 	/* eraser block */
 	if (eraser) {
-		p.x -= brushw/2;
-		p.y -= brushh/2;
+		p.x -= brushw/2.0;
+		p.y -= brushh/2.0;
 		CGContextSetRGBFillColor(c,0.0,1.0,1.0,0.4);
-		CGContextFillRect(c,CGRectMake(p.x,p.y,brushh,brushw));
+		CGContextFillRect(c,CGRectMake(p.x-1,p.y-1,brushh+2,brushw+2));
 	}
 }
 - (void) keyDown:(NSEvent *)ev {
-	/* SHIFT + ARROW */
-	if ( ([ev modifierFlags] & NSAlternateKeyMask) &&
-			[[ev characters] isEqualToString:
-			[NSString stringWithFormat:@"%c",NSUpArrowFunctionKey]]) {
-		brushw *= 1.2; brushh *= 1.2;
-	}
-	else if ( ([ev modifierFlags] & NSAlternateKeyMask) &&
-			[[ev characters] isEqualToString:
-			[NSString stringWithFormat:@"%c",NSDownArrowFunctionKey]]) {
-		brushw *= 1/1.2; brushh *= 1/1.2;
-	}
-	else if ( ([ev modifierFlags] & NSAlternateKeyMask) &&
-			[[ev characters] isEqualToString:
-			[NSString stringWithFormat:@"%c",NSRightArrowFunctionKey]]) {
-		brushw *= 1.2; brushh *= 1/1.2;
-	}
-	else if ( ([ev modifierFlags] & NSAlternateKeyMask) &&
-			[[ev characters] isEqualToString:
-			[NSString stringWithFormat:@"%c",NSLeftArrowFunctionKey]]) {
-		brushw *= 1/1.2; brushh *= 1.2;
-	}
-	/* ARROW */
-	else if ([[ev characters] isEqualToString:
-			[NSString stringWithFormat:@"%c",NSUpArrowFunctionKey]]) {
-		thresh *= 1.2; [keyer restart:self];
-	}
-	else if ([[ev characters] isEqualToString:
-			[NSString stringWithFormat:@"%c",NSDownArrowFunctionKey]]) {
-		thresh *= 1/1.2; [keyer restart:self];
-	}
-	else if ([[ev characters] isEqualToString:@"e"]) {
-		if ( (eraser = !eraser) ) {
-			/* TODO eraser cursor */
+	int i, c, n = [[ev characters] length];
+	for (i = 0; i < n; i++) {
+		c = [[ev characters] characterAtIndex:i];
+		if ([ev modifierFlags] & NSAlternateKeyMask ) {
+			if (c == NSUpArrowFunctionKey) { brushw *= 1.2; brushh *= 1.2; }
+			else if (c==NSDownArrowFunctionKey) { brushw*=1/1.2; brushh*=1/1.2; }
+			else if (c==NSLeftArrowFunctionKey) { brushw*=1/1.2; brushh*=1.2; }
+			else if (c==NSRightArrowFunctionKey) { brushw*=1.2; brushh*=1/1.2; }
+			else [super keyDown:ev];
 		}
 		else {
-			/* TODO crosshair cursor */
+			if (c == NSUpArrowFunctionKey) {
+				thresh *= 1.2; [keyer review:self];
+			}
+			else if (c == NSDownArrowFunctionKey) {
+				thresh *= 1/1.2; [keyer review:self];
+			}
+			else if (c == 'e') {
+				if ( (eraser=!eraser) ) [NSCursor hide];
+				else [NSCursor unhide];
+			}
+			else [super keyDown:ev];
 		}
 	}
-	else {
-		[super keyDown:ev];
-	}
-}
-- (void) mouseDown:(NSEvent *)ev {
-	restart = 1; review = 1;
-	[NSApp stop: nil];
+	[self setNeedsDisplay:YES];
 }
 - (void) mouseDragged:(NSEvent *)ev {
-	NSPoint xy = [ev locationInWindow];
-	xy.x = xy.x * fftw/(float)sw;
-	xy.y = xy.y * ffth/(float)sh;
 	if (eraser) {
+		NSPoint xy = [ev locationInWindow];
+		xy.x = xy.x * fftw/(float)sw;
+		xy.y = xy.y * ffth/(float)sh;
 		int i,j;
 		for (i = xy.x - brushw/2.0; i < xy.x+brushw/2.0; i++)
 			for (j = xy.y - brushh/2.0; j < xy.y+brushh/2.0; j++)
 				if ( i >= 0 && i < fft->ts && j >= 0 && j < fft->fs)
 					fft->amp[i][j] = min;
-		restart = 1; review = 1;
-		[NSApp stop: nil];
+		[keyer review:self];
+	}
+	else {
+		[self setNeedsDisplay:YES];
 	}
 }
 - (void) mouseMoved:(NSEvent *)ev {
-printf("mouseMoved\n");
 	[self setNeedsDisplay:YES];
 }
 @end
@@ -205,6 +188,11 @@ int preview_create(int w, int h, FFT *fftp) {
 	winview = [[[myView alloc] initWithFrame:NSMakeRect(0,0,w,h)] autorelease];
 	[winview scaleUnitSquareToSize:NSMakeSize(sw/(float)w,sh/(float)h)];
 	[win setContentView:winview];
+	[win makeFirstResponder:winview];
+	tracker = [[[NSTrackingArea alloc] initWithRect:NSMakeRect(0,0,w,h)
+			options:NSTrackingMouseMoved|NSTrackingActiveAlways
+			owner:winview userInfo:nil] autorelease];
+	[winview addTrackingArea:tracker];
 	static int hereagain = 0; if ( (++hereagain) == 1 ) {
 		/* this is a ridiculously ugly hack
 			can any mac-heads explain this to me?
@@ -216,12 +204,6 @@ int preview_create(int w, int h, FFT *fftp) {
 	[win setTitle:appName];
 	[NSCursor crosshairCursor];
 	[NSApp activateIgnoringOtherApps:YES];
-/*
-	tracker = [[[NSTrackingArea alloc] initWithRect:NSMakeRect(0,0,w,h)
-			options:NSTrackingMouseMoved owner:winview userInfo:nil]
-			autorelease];
-	[winview addTrackingArea:tracker];
-*/
 	/* MAKE IMAGE */
 	alphas = malloc(w*h);
 	int i,j;
