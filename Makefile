@@ -4,6 +4,7 @@ VER		=	0.3a
 SOURCE	=	fex.c
 HEADERS =	fex.h
 PREFIX	?=	/usr
+CC		?=	gcc
 CFLAGS	+=	-Os `pkg-config --cflags sndfile fftw3`
 LDFLAGS	+=	`pkg-config --libs sndfile fftw3`
 DEFS	=	-DPROGRAM_NAME=${PROG} -DPROGRAM_VER=${VER}
@@ -19,6 +20,7 @@ CFLAGS	+=	-framework Cocoa
 else
 ifeq "${TARGET}" "win"
 $(error No windows port is available yet)
+SOURCE	+=	wingdi.c
 endif
 endif
 endif
@@ -28,7 +30,7 @@ default:
 	@echo -e "  make linux\n  make mac\n  make win"	
 
 ${PROG}: ${SOURCE} ${HEADERS}
-	@gcc -o ${PROG} ${DEFS} ${SOURCE} ${CFLAGS} ${LDFLAGS}
+	@${CC} -o ${PROG} ${DEFS} ${SOURCE} ${CFLAGS} ${LDFLAGS}
 	@strip ${PROG}
 
 linux:
