@@ -1,2 +1,6 @@
-FEX / XCAIROFEX are task specific tools for specific research purposes.  The relevant usage details will be elaborated in an upcoming publication.
+FEX is a task specific tools for specific research purposes.  The relevant usage details will be elaborated in an upcoming publication.
+
+FEX is available for linux/bsd as XCairoFex or for Mac OSX (>=10.5) as MacFex.
+
+A Windows version is in the early stages.
 
