@@ -29,6 +29,7 @@ typedef struct {
 	double a[4];
 } SampleWindow;
 
+typedef struct {int x1,y1,x2,y2; } ZRect;
 
 extern int die(const char *);
 
@@ -41,5 +42,6 @@ extern int edit(int,int,double **);
 
 double max, min, thresh;
 const char *name;
+ZRect zrect;
 
 #endif /* __FEX_H__ */

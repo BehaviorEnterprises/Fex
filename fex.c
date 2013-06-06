@@ -204,16 +204,22 @@ Wave *read_wave(const char *fname) {
 	SF_INFO *wi; SNDFILE *wf = NULL;
 	wi = (SF_INFO *) malloc(sizeof(SF_INFO));
 	wf = sf_open(fname,SFM_READ,wi);
-	w->d = (double *) malloc(wi->frames*sizeof(double));
-	sf_count_t n = sf_readf_double(wf,w->d,wi->frames);
-	w->samples = n;
+	w->samples = wi->frames;
 	w->rate = wi->samplerate;
+if (zrect.x1 || zrect.x2) {
+	w->samples = (zrect.x2-zrect.x1)*hop;
+	sf_seek(wf,zrect.x1*hop,SEEK_SET);
+}
+	w->d = (double *) malloc(w->samples*sizeof(double));
+	sf_count_t n = sf_readf_double(wf,w->d,w->samples);
+if (n != w->samples) printf("error\n");
 	sf_close(wf);
 	return w;
 }
 
 int main(int argc, const char **argv) {
 	int restart = 1, previewing, i,j, f;
+	zrect = (ZRect) {0,0,0,0};
 	double lt, lf;
 	long double ex, tex;
 	while (restart) {

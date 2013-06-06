@@ -19,16 +19,17 @@ static void expose(XEvent *);
 static void keypress(XEvent *);
 static void motionnotify(XEvent *);
 //static void xcairo_help();
+static void zoom();
 
 static Display *dpy;
 static int scr, sw, sh, sx, sy, fftw, ffth, stride;
-static int review, restart, ty, bw, wx, wy;
+static int review, restart, zoomer, ty, bw, wx, wy;
 static Window root, win;
 static Pixmap buf, pbuf, zmap;
 static GC gc;
 static XFontStruct *fontstruct;
 static Cursor invisible_cursor, crosshair_cursor;
-static Bool running, zoom, eraser;
+static Bool running, eraser;
 static cairo_t *c, *z;
 static cairo_surface_t *mask, *zsrc;
 static float scx, scy, brushw, brushh;
@@ -54,8 +55,6 @@ void buttonrelease(XEvent *e) {
 
 void draw() {
 	XCopyArea(dpy,pbuf,buf,gc,0,0,sw,sh,0,0);
-	if (zoom) XCopyArea(dpy,buf,zmap,gc, sx - sw/24, sy - sh/24,
-			(sw-2*bw)/12+2,(sh-2*bw)/12+2,0,0);
 	if (eraser) {
 		cairo_rectangle(c,wx-brushw/2,wy-brushh/2,brushw,brushh);
 		cairo_fill(c);
@@ -69,13 +68,24 @@ void draw() {
 	x = XTextWidth(fontstruct,name,strlen(name));
 	x = (sw - x)/2;
 	XDrawString(dpy,buf,gc,x,ty,name,strlen(name));
-	if (zoom) {
-		cairo_set_source_surface(z,zsrc,0,0);
-		cairo_paint(z);
-		cairo_set_source_rgba(z,0.0,0.2,0.4,0.8);
-		cairo_rectangle(z,0,0,(sw-2*bw)/12,(sh-2*bw)/12);
-		cairo_stroke(z);
-	}	
+	if (zoomer) {
+		cairo_set_source_rgba(c,0.0,0.5,0.1,1.0);
+		cairo_move_to(c,wx,0);
+		cairo_line_to(c,wx,fft->fs);
+		cairo_move_to(c,0,wy);
+		cairo_line_to(c,fft->ts,wy);
+		cairo_stroke(c);
+		if (zoomer == 2) {
+			cairo_move_to(c,zrect.x1,0);
+			cairo_line_to(c,zrect.x1,fft->fs);
+			cairo_move_to(c,0,zrect.y1);
+			cairo_line_to(c,fft->ts,zrect.y1);
+			cairo_stroke(c);
+			cairo_set_source_rgba(c,0.0,0.5,0.1,0.2);
+			cairo_rectangle(c,zrect.x1,zrect.y1,wx-zrect.x1,wy-zrect.y1);
+			cairo_fill(c);
+		}
+	}
 	XCopyArea(dpy,buf,win,gc,0,0,sw,sh,0,0);
 	XFlush(dpy);
 }
@@ -99,7 +109,7 @@ void keypress(XEvent *e){
 	}
 	else if (key == XK_Up) { thresh *= 1.2; running = False; }
 	else if (key == XK_Down) { thresh *= 1/1.2; running = False; }
-	else if (key == XK_z) zoom = !zoom;
+	else if (key == XK_z) zoom();
 	//else if (key == XK_h) xcairo_help();
 	else if (key == XK_e) {
 		if ( (eraser = !eraser) ) XDefineCursor(dpy,win,invisible_cursor);
@@ -124,11 +134,48 @@ void motionnotify(XEvent *e){
 	running = False;
 }
 
+void zoom() {
+	XEvent e;
+	zoomer = 1; draw();
+	while (e.type != ButtonPress) {
+		XMaskEvent(dpy,ButtonPressMask|PointerMotionMask,&e);
+		draw();
+		sx = e.xbutton.x; sy = e.xbutton.y;
+		wx = (sx - bw)/scx;
+		wy = fft->fs + (sy - bw)/scy;
+	}
+	zrect.x1 = wx; zrect.y1 = wy;
+	zoomer = 2; draw();
+	e.type = MotionNotify;
+	while (e.type != ButtonPress) {
+		XMaskEvent(dpy,ButtonPressMask|PointerMotionMask,&e);
+		draw();
+		sx = e.xbutton.x; sy = e.xbutton.y;
+		wx = (sx - bw)/scx;
+		wy = fft->fs + (sy - bw)/scy;
+	}
+	zrect.x2 = wx; zrect.y2 = wy;
+	if (zrect.x2 < zrect.x1) {
+		int t = zrect.x2;
+		zrect.x2 = zrect.x1;
+		zrect.x1 = t;
+	}
+	if (zrect.y2 < zrect.y1) {
+		int t = zrect.y2;
+		zrect.y2 = zrect.y1;
+		zrect.y1 = t;
+	}
+	running = False;
+	restart = 1;
+	review = 0;
+}
+
 int preview_create(int w, int h, FFT *fftp) {
 	fft = fftp;
 	fftw = w; ffth = h;
 	brushw = w/14; brushh = h/14;
-	restart = 0; zoom = eraser = False;
+	restart = 0; zoomer = 0; eraser = False;
+	zrect = (ZRect) {0,0,0,0};
 	int i,j;
 	dpy = XOpenDisplay(0x0);
 	scr = DefaultScreen(dpy);
@@ -209,6 +256,7 @@ int preview_test(long double ee, long double te) {
 	XCopyArea(dpy,buf,pbuf,gc,0,0,sw,sh,0,0);
 	draw();
 	XEvent ev;
+	XRaiseWindow(dpy,win);
 	int i;
 	for (i = 0; i < 1000; i++) {
 		if (XGrabKeyboard(dpy,root,True,GrabModeAsync,GrabModeAsync,CurrentTime) ==
