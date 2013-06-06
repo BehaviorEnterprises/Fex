@@ -5,7 +5,7 @@
 static int sw, sh, fftw, ffth;
 static int review, restart, ty, bw, wx, wy;
 static id appName, keyer, win, winview, tracker;
-static unsigned short int zoom = 0, eraser = 0;
+static unsigned short int zoomer = 0, eraser = 0;
 static float scx, scy, brushw, brushh;
 static unsigned char *alphas, *a;
 static FFT *fft;
@@ -21,7 +21,6 @@ static char bar[2][256];
 - (void) restart:(id)sender { restart = 1; review = 0; [NSApp stop: nil]; }
 - (void) review:(id)sender { restart = 1; review = 1; [NSApp stop: nil]; }
 - (void) help:(id)sender { /* TODO */ printf("Help menu\n"); }
-- (void) zoom:(id)sender { zoom = !zoom; /* TODO trigger redraw? */ }
 @end
 
 @interface myView : NSView
@@ -66,15 +65,26 @@ static char bar[2][256];
 	CGContextShowText(c,name,strlen(name));
 	CGContextSetTextPosition(c,fftw-w2-2,p1.y);
 	CGContextShowText(c,bar[1],strlen(bar[1]));
-	/* eraser block */
-	if (eraser) {
+	if (eraser) { /* eraser block */
 		p.x -= brushw/2.0;
 		p.y -= brushh/2.0;
 		CGContextSetRGBFillColor(c,0.0,1.0,1.0,0.4);
 		CGContextFillRect(c,CGRectMake(p.x-1,p.y-1,brushh+2,brushw+2));
 	}
+	else if (zoomer) { /* zoomer window */
+		CGContextSetRGBStrokeColor(c,0.0,0.5,0.1,1.0);
+		CGContextSetRGBFillColor(c,0.0,0.5,0.1,0.2);
+		CGContextMoveToPoint(c,p.x,0);
+		CGContextAddLineToPoint(c,p.x,fft->fs);
+		if (range[0]) {
+			CGRect r = CGRectMake(range[0],0,p.x-range[0],fft->fs);
+			CGContextStrokeRect(c,r)
+			CGContextFillRect(c,r)
+		}
+	}
 }
 - (void) keyDown:(NSEvent *)ev {
+	range[0] = range[1] = zoomer = 0;
 	int i, c, n = [[ev characters] length];
 	for (i = 0; i < n; i++) {
 		c = [[ev characters] characterAtIndex:i];
@@ -96,10 +106,20 @@ static char bar[2][256];
 				if ( (eraser=!eraser) ) [NSCursor hide];
 				else [NSCursor unhide];
 			}
+			else if (c == 'z') {
+				zoomer = 1;
+			}
 			else [super keyDown:ev];
 		}
 	}
 	[self setNeedsDisplay:YES];
+}
+- (void) mouseDown:(NSEvent *)ev {
+	if (!zoomer) [super mouseDown:ev];
+	NSPoint xy = [ev locationInWindow];
+	if (!range[0]) range[0] = xy.x*fftw/(float)ws;
+	else range[1] = xy.x*fftw/(float)ws;
+	if (range[1]) [keyer restart:self];
 }
 - (void) mouseDragged:(NSEvent *)ev {
 	if (eraser) {
@@ -143,7 +163,7 @@ void spectro() {
 int preview_create(int w, int h, FFT *fftp) {
 	fft = fftp; fftw = w; ffth = h;
 	brushw = w/14; brushh = h/14;
-	restart = 0; zoom = eraser = 0;
+	restart = range[0] = range[1] = zoomer = eraser = 0;
 	[NSAutoreleasePool new];
 	[[NSApplication sharedApplication] autorelease];
 	id appName = [[[NSProcessInfo processInfo] processName] autorelease];
