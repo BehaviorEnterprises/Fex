@@ -72,17 +72,11 @@ void draw() {
 		cairo_set_source_rgba(c,0.0,0.5,0.1,1.0);
 		cairo_move_to(c,wx,0);
 		cairo_line_to(c,wx,fft->fs);
-		cairo_move_to(c,0,wy);
-		cairo_line_to(c,fft->ts,wy);
 		cairo_stroke(c);
 		if (zoomer == 2) {
-			cairo_move_to(c,zrect.x1,0);
-			cairo_line_to(c,zrect.x1,fft->fs);
-			cairo_move_to(c,0,zrect.y1);
-			cairo_line_to(c,fft->ts,zrect.y1);
-			cairo_stroke(c);
+			cairo_rectangle(c,range[0],0,wx-range[0],fft->fs);
+			cairo_stroke_preserve(c);
 			cairo_set_source_rgba(c,0.0,0.5,0.1,0.2);
-			cairo_rectangle(c,zrect.x1,zrect.y1,wx-zrect.x1,wy-zrect.y1);
 			cairo_fill(c);
 		}
 	}
@@ -138,32 +132,30 @@ void zoom() {
 	XEvent e;
 	zoomer = 1; draw();
 	while (e.type != ButtonPress) {
-		XMaskEvent(dpy,ButtonPressMask|PointerMotionMask,&e);
-		draw();
+		XMaskEvent(dpy,ButtonPressMask|PointerMotionMask|KeyPressMask,&e);
+		if (e.type == KeyPress) {
+			zoomer=0;
+			return;
+		}
 		sx = e.xbutton.x; sy = e.xbutton.y;
 		wx = (sx - bw)/scx;
 		wy = fft->fs + (sy - bw)/scy;
+		draw();
 	}
-	zrect.x1 = wx; zrect.y1 = wy;
-	zoomer = 2; draw();
+	range[0] = wx; zoomer = 2; draw();
 	e.type = MotionNotify;
 	while (e.type != ButtonPress) {
 		XMaskEvent(dpy,ButtonPressMask|PointerMotionMask,&e);
-		draw();
 		sx = e.xbutton.x; sy = e.xbutton.y;
 		wx = (sx - bw)/scx;
 		wy = fft->fs + (sy - bw)/scy;
+		draw();
 	}
-	zrect.x2 = wx; zrect.y2 = wy;
-	if (zrect.x2 < zrect.x1) {
-		int t = zrect.x2;
-		zrect.x2 = zrect.x1;
-		zrect.x1 = t;
-	}
-	if (zrect.y2 < zrect.y1) {
-		int t = zrect.y2;
-		zrect.y2 = zrect.y1;
-		zrect.y1 = t;
+	range[1] = wx;
+	if (range[1] < range[0]) {
+		int t = range[0];
+		range[0] = range[1];
+		range[1] = t;
 	}
 	running = False;
 	restart = 1;
@@ -175,7 +167,7 @@ int preview_create(int w, int h, FFT *fftp) {
 	fftw = w; ffth = h;
 	brushw = w/14; brushh = h/14;
 	restart = 0; zoomer = 0; eraser = False;
-	zrect = (ZRect) {0,0,0,0};
+	range[0] = 0; range[1] = 0;
 	int i,j;
 	dpy = XOpenDisplay(0x0);
 	scr = DefaultScreen(dpy);
