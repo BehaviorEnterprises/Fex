@@ -78,8 +78,8 @@ static char bar[2][256];
 		CGContextAddLineToPoint(c,p.x,fft->fs);
 		if (range[0]) {
 			CGRect r = CGRectMake(range[0],0,p.x-range[0],fft->fs);
-			CGContextStrokeRect(c,r)
-			CGContextFillRect(c,r)
+			CGContextStrokeRect(c,r);
+			CGContextFillRect(c,r);
 		}
 	}
 }
@@ -117,8 +117,8 @@ static char bar[2][256];
 - (void) mouseDown:(NSEvent *)ev {
 	if (!zoomer) [super mouseDown:ev];
 	NSPoint xy = [ev locationInWindow];
-	if (!range[0]) range[0] = xy.x*fftw/(float)ws;
-	else range[1] = xy.x*fftw/(float)ws;
+	if (!range[0]) range[0] = xy.x*fftw/(float)sw;
+	else range[1] = xy.x*fftw/(float)sw;
 	if (range[1]) [keyer restart:self];
 }
 - (void) mouseDragged:(NSEvent *)ev {
