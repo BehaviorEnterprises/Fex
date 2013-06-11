@@ -29,7 +29,6 @@ typedef struct {
 	double a[4];
 } SampleWindow;
 
-
 extern int die(const char *);
 
 extern int preview_create(int, int,FFT *);
@@ -41,5 +40,6 @@ extern int edit(int,int,double **);
 
 double max, min, thresh;
 const char *name;
+int range[2];
 
 #endif /* __FEX_H__ */
