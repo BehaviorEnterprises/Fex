@@ -49,7 +49,12 @@ tarball: clean
 	@rm -f ${PROG}-*.tar.gz
 	@tar -czf ${PROG}-${VER}.tar.gz *
 
-install: ${PROG}
+install: install.${TARGET}
+
+install.linux: ${PROG}
 	@install -Dm755 ${PROG} ${DESTDIR}${PREFIX}/bin/${PROG}
+
+install.mac: ${PROG}
+	@cp ${PROG} ${DESTDIR}${PREFIX}/bin/${PROG}
 	@cp -r MacFex.app ${DESTDIR}/Applications/
 
