@@ -52,9 +52,14 @@ if [[ $? -ne 0 ]]; then
 fi
 msg "Sources retreived, building fex"
 cd fex
-make mac
+make TARGET=mac
 if [[ $? -ne 0 ]]; then
 	err "Error building fex"
+	die
+fi
+sudo make install TARGET=mac
+if [[ $? -ne 0 ]]; then
+	err "Error installing fex"
 	die
 fi
 

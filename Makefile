@@ -49,8 +49,12 @@ tarball: clean
 	@rm -f ${PROG}-*.tar.gz
 	@tar -czf ${PROG}-${VER}.tar.gz *
 
-install: ${PROG}
-	@echo -en "\033[32;1m==>\033[31m WARNING:\033[0m "
-	@echo -e  "alpha versions should not be installed"
-	@#install -Dm755 ${PROG} ${DESTDIR}${PREFIX}/bin/${PROG}
+install: install.${TARGET}
+
+install.linux: ${PROG}
+	@install -Dm755 ${PROG} ${DESTDIR}${PREFIX}/bin/${PROG}
+
+install.mac: ${PROG}
+	@cp ${PROG} ${DESTDIR}${PREFIX}/bin/${PROG}
+	@cp -r MacFex.app ${DESTDIR}/Applications/
 
