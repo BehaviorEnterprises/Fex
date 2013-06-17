@@ -165,7 +165,7 @@ void zoom() {
 int preview_create(int w, int h, FFT *fftp) {
 	fft = fftp;
 	fftw = w; ffth = h;
-	brushw = w/14; brushh = h/14;
+	brushw = brushh = (w > h ? w : h)/15;
 	restart = 0; zoomer = 0; eraser = False;
 	range[0] = 0; range[1] = 0;
 	int i,j;
@@ -223,10 +223,12 @@ int preview_create(int w, int h, FFT *fftp) {
 	cairo_surface_destroy(t);
 	stride = cairo_format_stride_for_width(CAIRO_FORMAT_A8,w);
 	alphas = malloc(stride * h);
+	double split = floor_num*min/(1.0*floor_dem);
 	for (j = 0; j < h; j++) {
 		a = alphas + stride*j;
 		for (i = 0; i < w; i++, a++)
-			*a = (unsigned char) (fft->amp[i][j] * 255/ min);
+			*a = (unsigned char) 255 * ( ((fft->amp[i][j] - split) >= 0)  ?
+					fft->amp[i][j]/split : 1);
 	}
 	mask = cairo_image_surface_create_for_data(alphas,CAIRO_FORMAT_A8,w,h,stride);
 	cairo_set_source_rgba(c,1.0,1.0,1.0,1.0);

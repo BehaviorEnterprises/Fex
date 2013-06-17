@@ -39,6 +39,7 @@ extern int preview_destroy();
 extern int edit(int,int,double **);
 
 double max, min, thresh;
+int floor_num, floor_dem;
 const char *name;
 int range[2];
 

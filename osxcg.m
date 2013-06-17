@@ -162,7 +162,7 @@ void spectro() {
 
 int preview_create(int w, int h, FFT *fftp) {
 	fft = fftp; fftw = w; ffth = h;
-	brushw = w/14; brushh = h/14;
+	brushw = brushh = (w > h ? w : h)/15;
 	restart = range[0] = range[1] = zoomer = eraser = 0;
 	[NSAutoreleasePool new];
 	[[NSApplication sharedApplication] autorelease];
@@ -227,10 +227,12 @@ int preview_create(int w, int h, FFT *fftp) {
 	/* MAKE IMAGE */
 	alphas = malloc(w*h);
 	int i,j;
+	double split = floor_num*min/(1.0*floor_dem);
 	for (j = 0; j < h; j++) {
 		a = alphas + w*j;
 		for (i = 0; i < w; i++, a++)
-			*a = (unsigned char) (fft->amp[i][h-j] * 255/min);
+			*a = (unsigned char) 255 * ( ((fft->amp[i][j] - split) >= 0)  ?
+					fft->amp[i][j] / split : 1);
 	}
 	int byte_per_row = w*4;
 	int bytes = h*byte_per_row;

@@ -139,12 +139,16 @@ FFT *create_fft(Wave *w, int win, int hop) {
 		fft->amp[i][j] = 10.0 * log10(fft->amp[i][j]/max);
 		if (fft->amp[i][j] < min && fft->amp[i][j] > -900) min = fft->amp[i][j];
 	}
+	max = 0.0;
+	for (i = 0; i < fft->ts; i++) for (f = 0, j = 0; j < fft->fs; j++)
+		if (fft->amp[i][j] > max) max = fft->amp[i][j];
 	return fft;
 }
 
 const char *command_line(int argc, const char **argv) {
 	const char *winfun = NULL, *wavname = NULL;
 	char a; int i;
+	floor_num = 5; floor_dem = 8;
 	thresh = 0.0;
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] == '-') {
@@ -153,6 +157,7 @@ const char *command_line(int argc, const char **argv) {
 			else if (a == 'l' && argc > (++i)) winlen = atoi(argv[i]);
 			else if (a == 't' && argc > (++i)) thresh = atof(argv[i]);
 			else if (a == 'o' && argc > (++i)) hop = atof(argv[i]);
+			else if (a == 'f' && argc > (++i)) sscanf(argv[i],"%d/%d",&floor_num,&floor_dem);
 			else if (a == 'i') interactive = 0;
 			else if (a == 'v') version();
 			else if (a == 'h') help();
