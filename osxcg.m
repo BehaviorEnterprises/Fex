@@ -228,7 +228,7 @@ int preview_create(int w, int h, FFT *fftp) {
 	alphas = malloc(w*h);
 	int i,j;
 	double split = floor_num*min/(1.0*floor_dem);
-	for (j = 0; j < h; j++) {
+	for (j = h - 1; j; j++) {
 		a = alphas + w*j;
 		for (i = 0; i < w; i++, a++)
 			*a = (unsigned char) 255 * ( ((fft->amp[i][j] - split) >= 0)  ?
