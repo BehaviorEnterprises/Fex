@@ -1,7 +1,7 @@
 # Maintainer: Jesse McClure AKA "Trilby" <jmcclure [at] cns [dot] umass [dot] edu>
 _gitname="fex"
 pkgname="${_gitname}-git"
-pkgver=0
+pkgver=0.40.2ed25c5
 pkgrel=1
 pkgdesc="Frequency Excursion Calculator"
 url="https://github.com/TrilbyWhite/fex"
@@ -14,7 +14,7 @@ sha256sums=('SKIP')
 
 pkgver() {
 	cd "${_gitname}";
-	echo "2.$(git rev-list --count HEAD).$(git describe --always )"
+	echo "0.$(git rev-list --count HEAD).$(git describe --always )"
 }
 
 build() {
