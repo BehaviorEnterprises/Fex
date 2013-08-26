@@ -2,5 +2,7 @@ FEX is a task specific tools for specific research purposes.  The relevant usage
 
 FEX is available for linux/bsd as XCairoFex or for Mac OSX (>=10.5) as MacFex.
 
-A Windows version is in the early stages.
+A Windows version is in the early stages - development of this port will depend on user feedback.
+
+All versions are currently experimental, and undoubtedly have bugs.  But they are also in active development.  Good software comes from detailed feedback from users.  Please report any bugs or issues you run into.  Feature requests from users are also appreciated.  I'm happy to receieve such requests: your input helps me make Fex better.
 
