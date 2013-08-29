@@ -1,0 +1,14 @@
+#!/bin/bash
+
+platform=$(uname)
+[[ -n $1 ]] && platform=$1
+platform=${platform,,}
+
+case $platform in
+	linux) target="linux" ;;
+	mac|osx) target="mac" ;;
+	win|win95) target="win" ;;
+esac
+
+sed 's/^'$target'_//' Makefile.in > Makefile
+

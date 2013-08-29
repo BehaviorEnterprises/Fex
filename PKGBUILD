@@ -19,10 +19,11 @@ pkgver() {
 
 build() {
 	cd "${_gitname}"
-	make linux
+	./configure
+	make
 }
 
 package() {
 	cd "${_gitname}"
-	make PREFIX=/usr DESTDIR="${pkgdir}" install.linux
+	make DESTDIR="${pkgdir}" install
 }
