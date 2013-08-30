@@ -60,7 +60,11 @@ void draw() {
 		cairo_fill(c);
 	}
 	char str[256]; int x = bw + 4;
-	sprintf(str,"time: %.3lfs | freq: %.3lfkhz",fft->time[wx],fft->freq[wy]);
+	if (wx > -1 && wx < fft->ts && wy > -1 && wy < fft->fs)
+		sprintf(str,"time: %.3lfs | freq: %.3lfkhz",
+			fft->time[wx],fft->freq[wy]);
+	else
+		sprintf(str,"time: NA | freq: NA");
 	XDrawString(dpy,buf,gc,x,ty,str,strlen(str));
 	sprintf(str,"path: %.2Lf | time: %.2Lf | FE: %.2Lf",ex,tex,ex/tex);
 	x = XTextWidth(fontstruct,str,strlen(str)) + 4;
