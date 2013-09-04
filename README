@@ -16,7 +16,7 @@ Building Fex:
   A) Arch Linux: use included PKGBUILD
   B) Other Linux:
     B1) install all dependencies: cairo, libsndfile, and fftw-3.  If your distro uses split packages (eg unbuntoo) you'll also need the *-dev package(s)
-    B2) navigate to the fex directory and `make && sudo make install`
+    B2) navigate to the fex directory the `./configure`, `make`, and `sudo make install`
   C) Mac OS X:
     C-note) A fully functional build system is required.  I cannot provide support for configuring a build system on your mac - check web references or contact your local mac store for this.  Fex has been tested using a Macports build system, but experienced users should be able to use Fink, Homebrew, or any suitable alternative.
     C1) Install all dependencies via your build system (eg MacPorts): libsndfile, fftw-3
