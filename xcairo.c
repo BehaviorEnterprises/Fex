@@ -22,7 +22,7 @@ static void motionnotify(XEvent *);
 static void zoom();
 
 static Display *dpy;
-static int scr, sw, sh, sx, sy, fftw, ffth, stride;
+static int scr, sw, sh, sx, sy, fftw, ffth, ffty, stride,zpy;
 static int review, restart, zoomer, ty, bw, wx, wy;
 static Window root, win;
 static Pixmap buf, pbuf, zmap;
@@ -30,10 +30,10 @@ static GC gc;
 static XFontStruct *fontstruct;
 static Cursor invisible_cursor, crosshair_cursor;
 static Bool running, eraser;
-static cairo_t *c, *z;
+static cairo_t *c, *l;
 static cairo_surface_t *mask, *zsrc;
 static float scx, scy, brushw, brushh;
-static unsigned char *alphas, *a;
+static unsigned char *alphas = NULL;
 static FFT *fft;
 static long double ex,tex;
 static void (*handler[LASTEvent])(XEvent *) = {
@@ -45,6 +45,10 @@ static void (*handler[LASTEvent])(XEvent *) = {
 };
 
 void buttonpress(XEvent *e) {
+	if (eraser) {
+		e->xbutton.state = Button1Mask;
+		motionnotify(e);
+	}
 	XSync(dpy,True);
 }
 
@@ -56,15 +60,15 @@ void buttonrelease(XEvent *e) {
 void draw() {
 	XCopyArea(dpy,pbuf,buf,gc,0,0,sw,sh,0,0);
 	if (eraser) {
-		cairo_rectangle(c,wx-brushw/2,wy-brushh/2,brushw,brushh);
+		cairo_rectangle(c,wx-brushw/2,wy-ffty-brushh/2,brushw,brushh);
 		cairo_fill(c);
 	}
 	char str[256]; int x = bw + 4;
 	if (wx > -1 && wx < fft->ts && wy > -1 && wy < fft->fs)
-		sprintf(str,"time: %.3lfs | freq: %.3lfkhz",
-			fft->time[wx],fft->freq[wy]);
+		sprintf(str,"time: %.3lfs | freq: %.3lfkhz | threshold: %.1fdB",
+			fft->time[wx],fft->freq[wy],thresh);
 	else
-		sprintf(str,"time: NA | freq: NA");
+		sprintf(str,"time: NA | freq: NA | threshold: %.1fdB",thresh);
 	XDrawString(dpy,buf,gc,x,ty,str,strlen(str));
 	sprintf(str,"path: %.2Lf | time: %.2Lf | FE: %.2Lf",ex,tex,ex/tex);
 	x = XTextWidth(fontstruct,str,strlen(str)) + 4;
@@ -74,11 +78,13 @@ void draw() {
 	XDrawString(dpy,buf,gc,x,ty,name,strlen(name));
 	if (zoomer) {
 		cairo_set_source_rgba(c,0.0,0.5,0.1,1.0);
-		cairo_move_to(c,wx,0);
-		cairo_line_to(c,wx,fft->fs);
+		cairo_move_to(c,wx,ffty);
+		cairo_line_to(c,wx,ffth);
+		cairo_move_to(c,0,wy-ffty);
+		cairo_line_to(c,fftw,wy-ffty);
 		cairo_stroke(c);
 		if (zoomer == 2) {
-			cairo_rectangle(c,range[0],0,wx-range[0],fft->fs);
+			cairo_rectangle(c,range[0],zpy-ffty,wx-range[0],wy-zpy);
 			cairo_stroke_preserve(c);
 			cairo_set_source_rgba(c,0.0,0.5,0.1,0.2);
 			cairo_fill(c);
@@ -95,33 +101,61 @@ void expose(XEvent *e) {
 void keypress(XEvent *e){
 	KeySym key = XkbKeycodeToKeysym(dpy,(KeyCode)e->xkey.keycode,0,0);
 	unsigned int mod = (e->xkey.state&~Mod2Mask)&~LockMask;
-	if (mod == ControlMask) {
-		if(key == XK_q) { review = 0; running = False; }
-		else if (key == XK_r) { restart = 1; review = 0; running = False; }
+	if (key == XK_Escape) {
+		eraser = False;
+	}
+	else if (mod == ControlMask) {
+		if(key == XK_q) review = 0;
+		else if (key == XK_r) { restart = 1; review = 0; }
+		else if (key == XK_Up) thresh += 0.25;
+		else if (key == XK_Down) thresh -= 0.25; 
+		else if (key == XK_Right) { restart=1; review=0; sp_floor+=1;}
+		else if (key == XK_Left) { restart=1; review=0; sp_floor-=1;}
+		running = False;
 	}
 	else if (mod == ShiftMask) {
-		if (key == XK_Up) { brushw *= 1.2; brushh *=1.2; }
-		else if (key == XK_Down) { brushw *= 1/1.2; brushh *=1/1.2; }
-		else if (key == XK_Right) { brushw *= 1.2; brushh *=1/1.2; }
-		else if (key == XK_Left) { brushw *= 1/1.2; brushh *=1.2; }
 	}
-	else if (key == XK_Up) { thresh *= 1.2; running = False; }
-	else if (key == XK_Down) { thresh *= 1/1.2; running = False; }
-	else if (key == XK_z) zoom();
-	//else if (key == XK_h) xcairo_help();
-	else if (key == XK_e) {
-		if ( (eraser = !eraser) ) XDefineCursor(dpy,win,invisible_cursor);
-		else XDefineCursor(dpy,win,crosshair_cursor);
+	else {
+		if (eraser) { /* in eraser mode */
+			if (key == XK_Up) { brushw *= 1.2; brushh *=1.2; }
+			else if (key == XK_Down) { brushw *= 1/1.2; brushh *=1/1.2; }
+			else if (key == XK_Right) { brushw *= 1.2; brushh *=1/1.2; }
+			else if (key == XK_Left) { brushw *= 1/1.2; brushh *=1.2; }
+			else if (key == XK_e) {
+				eraser = False;
+				XDefineCursor(dpy,win,crosshair_cursor);
+			}
+		}
+		else { /* normal mode */
+			if (key == XK_z) {
+				if (range[0] || range[1]) {
+					memset(range,0,sizeof(range));
+					restart = 1; review = 0;
+				}
+				else {
+					zoom();
+				}
+			}
+			//else if (key == XK_h) xcairo_help();
+			else if (key == XK_e) {
+				Window w1, w2; int i1,i2,sx,sy; unsigned int u1;
+				XQueryPointer(dpy,win,&w1,&w2,&i1,&i2,&sx,&sy,&u1);
+				wx = (sx - bw)/scx;
+				wy = ffth + ffty + (sy - bw)/scy;
+				eraser = True;
+				XDefineCursor(dpy,win,invisible_cursor);
+			}
+		}
 	}
 	draw();
 }
 
 void motionnotify(XEvent *e){
+	if (!eraser) return;
 	sx = e->xbutton.x; sy = e->xbutton.y;
 	wx = (sx - bw)/scx;
-	wy = fft->fs + (sy - bw)/scy;
-	if (e->xbutton.x > bw && e->xbutton.x < sw-bw &&
-			e->xbutton.y > bw && e->xbutton.y < sh-bw &&
+	wy = ffth + ffty + (sy - bw)/scy;
+	if (wx > 0 && wx < fftw && wy > ffty && wy < ffty+ffth &&
 			((e->xbutton.state & Button1Mask) == Button1Mask)) {
 		int i,j;
 		for (i = wx-brushw/2.0; i < wx+brushw/2.0; i++)
@@ -143,23 +177,32 @@ void zoom() {
 		}
 		sx = e.xbutton.x; sy = e.xbutton.y;
 		wx = (sx - bw)/scx;
-		wy = fft->fs + (sy - bw)/scy;
+		wy = ffth + ffty + (sy - bw)/scy;
 		draw();
 	}
-	range[0] = wx; zoomer = 2; draw();
+	range[0] = wx;
+	lopass = fft->freq[(wy > 0 ? (wy < fft->fs ? wy : fft->fs-1) : 0)];
+	zpy = wy;
+	zoomer = 2; draw();
 	e.type = MotionNotify;
 	while (e.type != ButtonPress) {
 		XMaskEvent(dpy,ButtonPressMask|PointerMotionMask,&e);
 		sx = e.xbutton.x; sy = e.xbutton.y;
 		wx = (sx - bw)/scx;
-		wy = fft->fs + (sy - bw)/scy;
+		wy = ffth + ffty + (sy - bw)/scy;
 		draw();
 	}
 	range[1] = wx;
+	hipass = fft->freq[(wy > 0 ? (wy < fft->fs ? wy : fft->fs-1) : 0)];
 	if (range[1] < range[0]) {
 		int t = range[0];
 		range[0] = range[1];
 		range[1] = t;
+	}
+	if (lopass < hipass) {
+		double t = lopass;
+		lopass = hipass;
+		hipass = lopass;
 	}
 	running = False;
 	restart = 1;
@@ -169,10 +212,13 @@ void zoom() {
 int preview_create(int w, int h, FFT *fftp) {
 	fft = fftp;
 	fftw = w; ffth = h;
-	brushw = brushh = (w > h ? w : h)/15;
-	restart = 0; zoomer = 0; eraser = False;
-	range[0] = 0; range[1] = 0;
 	int i,j;
+for (i = 0; i < fft->fs && fft->freq[i] < hipass; i++);
+ffty = i;
+for (i++; i < fft->fs && fft->freq[i] < lopass; i++);
+ffth = i - ffty;
+	brushw = fftw/20; brushh = ffth/15;
+	restart = 0; zoomer = 0; eraser = False;
 	dpy = XOpenDisplay(0x0);
 	scr = DefaultScreen(dpy);
 	root = RootWindow(dpy,scr);
@@ -197,7 +243,6 @@ int preview_create(int w, int h, FFT *fftp) {
 	XDefineCursor(dpy,win,crosshair_cursor);
 	buf = XCreatePixmap(dpy,win,sw,sh,DefaultDepth(dpy,scr));
 	pbuf = XCreatePixmap(dpy,win,sw,sh,DefaultDepth(dpy,scr));
-	zmap = XCreatePixmap(dpy,win,sw/10,sh/10,DefaultDepth(dpy,scr));
 	XMapRaised(dpy,win);
 	XSetForeground(dpy,gc,BlackPixel(dpy,scr));
 	XFillRectangle(dpy,buf,gc,0,0,sw,sh);
@@ -205,50 +250,58 @@ int preview_create(int w, int h, FFT *fftp) {
 	XSetBackground(dpy,gc,BlackPixel(dpy,scr));
 	XFlush(dpy);
 	XWarpPointer(dpy,None,win,0,0,0,0,sw/2,sh/2);
-	wx = (sw/2 - bw)/scx;
-	wy = fft->fs + (sh/2 - bw)/scy;
 	cairo_surface_t *t = cairo_xlib_surface_create(dpy,buf,
 			DefaultVisual(dpy,scr),sw,sh);
 	c = cairo_create(t);
-	z = cairo_create(t);
+	l = cairo_create(t);
+	//z = cairo_create(t);
 	cairo_translate(c,bw,bw);
-	scx = (float)(sw-2*bw)/(float)w;
-	scy = -1.0 *(float)(sh-2*bw)/(float)h;
+	cairo_translate(l,bw,bw);
+	scx = (float)(sw-2*bw)/(float)fftw;
+	scy = -1.0 *(float)(sh-2*bw)/(float)ffth;
+	wx = (sw/2 - bw)/scx;
+	wy = fft->fs + (sh/2 - bw)/scy;
 	cairo_scale(c,scx,scy);
-	zsrc = cairo_xlib_surface_create(dpy,zmap,
-			DefaultVisual(dpy,scr),(sw-2*bw)/12,(sh-2*bw)/12);
-	cairo_translate(z,bw*2,bw*2);
-	cairo_scale(z,4.0,4.0);
-	cairo_translate(c,0.0,-1.0 * h);
-	cairo_set_line_join(z,CAIRO_LINE_JOIN_ROUND);
-	cairo_set_line_width(z,3.0);
+	cairo_translate(c,0.0,-1.0*ffth);
+	cairo_scale(l,scx,scy);
+	cairo_translate(l,0.0,-1.0*ffth);
 	cairo_set_line_join(c,CAIRO_LINE_JOIN_ROUND);
-	cairo_set_line_width(c,0.1);
+	cairo_set_line_join(l,CAIRO_LINE_JOIN_ROUND);
+	cairo_set_line_width(c,0.5);
+	cairo_set_line_width(l,0.1);
 	cairo_surface_destroy(t);
-	stride = cairo_format_stride_for_width(CAIRO_FORMAT_A8,w);
-	alphas = malloc(stride * h);
-	double split = floor_num*min/(1.0*floor_dem);
-	for (j = 0; j < h; j++) {
-		a = alphas + stride*j;
+	stride = cairo_format_stride_for_width(CAIRO_FORMAT_A8,fftw);
+	alphas = (unsigned char *) malloc(stride * ffth * 
+			sizeof(unsigned char));
+	unsigned char *a = NULL;
+	for (j = 0; j < ffth; j++) {
+		a = alphas + j*stride;
 		for (i = 0; i < w; i++, a++)
-			*a = (unsigned char) 255 * ( ((fft->amp[i][j] - split) >= 0)  ?
-					fft->amp[i][j]/split : 1);
+			*a = (unsigned char) 255 * (
+					((fft->amp[i][j+ffty] - sp_floor) >= 0) 
+					? fft->amp[i][j+ffty]/sp_floor : 1);
 	}
-	mask = cairo_image_surface_create_for_data(alphas,CAIRO_FORMAT_A8,w,h,stride);
+	mask = cairo_image_surface_create_for_data(alphas,CAIRO_FORMAT_A8,
+			fftw,ffth,stride);
 	cairo_set_source_rgba(c,1.0,1.0,1.0,1.0);
 	cairo_mask_surface(c,mask,0,0);
-	cairo_set_source_rgba(c,1.0,0.9,0.0,1.0);
+	cairo_set_source_rgba(c,1.0,0.2,0.0,1.0);
+	cairo_set_source_rgba(l,1.0,0.9,0.0,1.0);
 	return 0;
 }
 
 int preview_peak(int x, int y) {
 	cairo_new_sub_path(c);
-	cairo_arc(c,x,y,0.35,0,2*M_PI);
+	cairo_arc(c,x,y-ffty,0.35,0,2*M_PI);
+	cairo_line_to(l,x,y-ffty);
 	return 0;
 }
 
 int preview_test(long double ee, long double te) {
 	ex = ee; tex = te;
+	cairo_set_source_rgba(c,1.0,0.2,0.0,1.0);
+	cairo_set_source_rgba(l,1.0,0.9,0.0,1.0);
+	cairo_stroke(l);
 	cairo_fill(c);
 	cairo_set_source_rgba(c,0.6,0.7,1.0,0.65);
 	XCopyArea(dpy,buf,pbuf,gc,0,0,sw,sh,0,0);
@@ -282,7 +335,7 @@ int preview_destroy() {
 	cairo_surface_destroy(mask);
 	cairo_surface_destroy(zsrc);
 	cairo_destroy(c);
-	cairo_destroy(z);
+	cairo_destroy(l);
 	free(alphas);
 	XFreeFont(dpy,fontstruct);
 	XFreeGC(dpy,gc);

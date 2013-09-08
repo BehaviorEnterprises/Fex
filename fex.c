@@ -1,4 +1,4 @@
-/**************************************************************************\
+/*************************************************************************\
 * FEX - Frequency excursion estimator
 *
 * Author: Jesse McClure, copyright 2013
@@ -18,7 +18,7 @@
 *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 *
-\**************************************************************************/
+\*************************************************************************/
 
 
 #include "fex.h"
@@ -29,8 +29,8 @@ static void free_fft(FFT *);
 static void free_wave(Wave *);
 static Wave *read_wave(const char *);
 
-static double hipass = 1.25;
-static int winlen = 256, hop = 221, interactive = 1;
+//static double hipass = 1.25, lopass = 10.0;
+static int winlen = 0, hop = 0, interactive = 1;
 static SampleWindow custom;
 static const SampleWindow *wn = NULL;
 static const SampleWindow windows[] = {
@@ -63,8 +63,8 @@ static inline void help() {
 "  -i                inhibit interactive plotting mode\n"
 "  -w <name>         select a windowing function (default=hanning)\n"
 "  -l <length>       dft window length in number of samples (default=256)\n"
-"  -o <offset>       offset between windows (default=221 or ~50ms)\n"
-"  -t <threshold>    minimum amplitude to accept for peaks\n\n"
+"  -o <offset>       offset between windows (default=window length)\n"
+"  -t <threshold>    minimum amplitude, in dB below signal max, to accept for peaks (default=24.0)\n\n"
 "WINDOW FUNCTIONS\n"
 "  Any function that can be represented as a 4-term cosine function can be\n"
 "  used for windowing.  Choose from any of the preprogrammed options below,\n"
@@ -127,26 +127,37 @@ FFT *create_fft(Wave *w, int win, int hop) {
 			fft->amp[j][i] = sqrtf(out[i][0]*out[i][0] + out[i][1]*out[i][1]);
 	}
 	done:
-	fftw_destroy_plan(p); fftw_free(out); fftw_free(in);
+	fftw_destroy_plan(p);
+	fftw_free(out);
+	fftw_free(in);
+	/* fill and zero unused bins */
+	for ( ; j < fft->ts; j++)
+		fft->amp[j] = (double *) calloc(fft->fs, sizeof(double));
+	/* band pass filter */
+	for (i = 0; i < fft->ts; i++) {
+		for (j = 0; j < fft->fs && fft->freq[j] < hipass; j++)
+			fft->amp[i][j] = 0;
+		for (j = fft->fs-1; j && fft->freq[j] > lopass; j--)
+			fft->amp[i][j] = 0;
+	}
 	/* normalize, log transform amplitude, and scale to dB */
 	max = 0.0, min = 0.0;
-	for (i = 0; i < fft->ts; i++) for (f = 0, j = 0; j < fft->fs; j++)
+	for (i = 0; i < fft->ts; i++) for (j = 0; j < fft->fs; j++)
 		if (fft->amp[i][j] > max) max = fft->amp[i][j];
 	for (i = 0; i < fft->ts; i++) for (f = 0, j = 0; j < fft->fs; j++) {
 		fft->amp[i][j] = 10.0 * log10(fft->amp[i][j]/max);
 		if (fft->amp[i][j]<min && fft->amp[i][j]>-900) min = fft->amp[i][j];
 	}
 	max = 0.0;
-	for (i = 0; i < fft->ts; i++) for (f = 0, j = 0; j < fft->fs; j++)
-		if (fft->amp[i][j] > max) max = fft->amp[i][j];
+//	for (i = 0; i < fft->ts; i++) for (f = 0, j = 0; j < fft->fs; j++)
+//		if (fft->amp[i][j] > max) max = fft->amp[i][j];
 	return fft;
 }
 
 const char *command_line(int argc, const char **argv) {
 	const char *winfun = NULL, *wavname = NULL;
 	char a; int i;
-	floor_num = 5; floor_dem = 8;
-	thresh = 0.0;
+	thresh = -24.0;
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] == '-') {
 			a = (argv[i][1] == '-' ? argv[i][2] : argv[i][1]);
@@ -155,11 +166,9 @@ const char *command_line(int argc, const char **argv) {
 			else if (a == 'l' && argc > (++i))
 				winlen = atoi(argv[i]);
 			else if (a == 't' && argc > (++i))
-				thresh = atof(argv[i]);
+				thresh = -1.0 * atof(argv[i]);
 			else if (a == 'o' && argc > (++i))
 				hop = atof(argv[i]);
-			else if (a == 'f' && argc > (++i))
-				sscanf(argv[i],"%d/%d",&floor_num,&floor_dem);
 			else if (a == 'i')
 				interactive = 0;
 			else if (a == 'v')
@@ -203,8 +212,10 @@ int die(const char *msg) {
 void free_fft(FFT *fft) {
 	int i;
 	for (i = 0; i < fft->ts; i++) free(fft->amp[i]);
-	//free(fft->amp);free(fft->freq);
+	/* why does this double-free fault? */
+//	free(fft->amp);
 	free(fft->time);
+	free(fft->freq);
 	free(fft);
 }
 
@@ -228,19 +239,22 @@ Wave *read_wave(const char *fname) {
 	sf_count_t n = sf_readf_double(wf,w->d,w->samples);
 	if (n != w->samples) printf("error\n");
 	sf_close(wf);
+	if (!winlen) winlen = 256;
+	if (!hop) hop = winlen / 4;
 	return w;
 }
 
 int main(int argc, const char **argv) {
 	int restart = 1, previewing, i,j, f;
-	range[0] = 0; range[1] = 0;
+	sp_floor = -30.0;
+	memset(range,0,sizeof(range));
+	hipass = 1.25; lopass = 15.0;
 	double lt, lf;
 	long double ex, tex;
 	while (restart) {
 		Wave *w = read_wave(command_line(argc,argv));
 		FFT *fft = create_fft(w,winlen,hop);
 		free_wave(w);
-		if ( thresh > -0.1 ) thresh = min / 5;
 		if (interactive) preview_create(fft->ts,fft->fs,fft);
 		previewing = 1;
 		ex = tex = 0.0;
@@ -249,8 +263,8 @@ int main(int argc, const char **argv) {
 			ex = 0.0; tex = 0.0;
 			for (i = 1; i < fft->ts; i++) {
 				for (f = 0, j = 0; j < fft->fs; j++)
-					if (fft->amp[i][j] > fft->amp[i][f] &&
-							fft->freq[j] > hipass) f = j;
+					if ( (fft->amp[i][j] > fft->amp[i][f] || !f) )
+						f = j;
 				if (f > 0 && fft->amp[i][f] > thresh ) {
 					if (lt != fft->time[0]) {
 						ex += sqrtf((fft->freq[f] - lf) * (fft->freq[f] - lf) +
@@ -264,9 +278,9 @@ int main(int argc, const char **argv) {
 			if (interactive) previewing = preview_test(ex,tex);
 			else previewing = 0;
 		}
+		free_fft(fft);
 		if (interactive) restart = preview_destroy();
 		else restart = 0;
-		free_fft(fft);
 	}
 	printf("%Lf\n",ex/tex);
 	return 0;
