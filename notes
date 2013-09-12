@@ -1,0 +1,25 @@
+
+BIN SIZE:
+
+No detectable difference in FE score using different window length or hop values,
+which is *very* good.  The score does not seem to be very dependent on configuration
+parameters, but rather on the signal itself.
+
+Some values for window length, however, make very ugly spectrograms that are hard to
+work with.  256 samples make very good spectrograms, which is likely why it is the default
+setting in many spectrographic software tools.  With a 44.1KHz sampling rate, 5ms happens
+to be close to this value (221), and produces good spectrograms.  But with a 22.05KHz
+sample rate, a window length based on 5ms uses 110 samples - which leads to ugly
+spectrograms that are hard to work with interactively.
+
+The sample rate at which a signal is recorded should not have a substantial impact on the
+resulting FE score, provided that the rate is sufficient.  Using a 5ms standard will result
+in window lengths that are highly dependent on the sampling rate of the input signal, and thus
+may impact how effectively a user can isolate the signal in the spectrogram.
+
+Using a consistent 256 sample window length, in contrast, should produce more consistent
+results independent of sample rate, and is close to the 5ms bin size for 44.1KHz recordings.
+
+THRESHOLD:
+-24dB is too low
+

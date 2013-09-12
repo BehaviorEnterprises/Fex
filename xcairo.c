@@ -32,7 +32,7 @@ static Cursor invisible_cursor, crosshair_cursor;
 static Bool running, eraser;
 static cairo_t *c, *l;
 static cairo_surface_t *mask, *zsrc;
-static float scx, scy, brushw, brushh;
+static float scx, scy, brushw, brushh, radius = 0.75, line_width=0.2;
 static unsigned char *alphas = NULL;
 static FFT *fft;
 static long double ex,tex;
@@ -114,6 +114,15 @@ void keypress(XEvent *e){
 		running = False;
 	}
 	else if (mod == ShiftMask) {
+		if (key == XK_Up) { radius += 0.05; running=False; }
+		else if (key == XK_Down) { radius -= 0.05; running=False; }
+		else if (key == XK_Left) { line_width -= 0.1; running=False; }
+		else if (key == XK_Right) { line_width += 0.1; running=False; }
+		if (radius < 0.01) radius = 0.01;
+		else if (radius > 10) radius = 10;
+		if (line_width < 0.01) line_width = 0.01;
+		else if (line_width > 10) line_width = 10;
+		cairo_set_line_width(l,line_width);
 	}
 	else {
 		if (eraser) { /* in eraser mode */
@@ -268,7 +277,7 @@ ffth = i - ffty;
 	cairo_set_line_join(c,CAIRO_LINE_JOIN_ROUND);
 	cairo_set_line_join(l,CAIRO_LINE_JOIN_ROUND);
 	cairo_set_line_width(c,0.5);
-	cairo_set_line_width(l,0.1);
+	cairo_set_line_width(l,line_width);
 	cairo_surface_destroy(t);
 	stride = cairo_format_stride_for_width(CAIRO_FORMAT_A8,fftw);
 	alphas = (unsigned char *) malloc(stride * ffth * 
@@ -292,7 +301,7 @@ ffth = i - ffty;
 
 int preview_peak(int x, int y) {
 	cairo_new_sub_path(c);
-	cairo_arc(c,x,y-ffty,0.35,0,2*M_PI);
+	cairo_arc(c,x,y-ffty,radius,0,2*M_PI);
 	cairo_line_to(l,x,y-ffty);
 	return 0;
 }

@@ -5,7 +5,7 @@ platform=$(uname)
 platform=${platform,,}
 
 case $platform in
-	linux) target="linux" ;;
+	Linux|linux) target="linux" ;;
 	mac|osx) target="mac" ;;
 	win|win95) target="win" ;;
 esac

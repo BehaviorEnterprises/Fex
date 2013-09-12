@@ -19,9 +19,9 @@ typedef struct {
 } Wave;
 
 typedef struct {
+	int fs, ts;
 	double **amp; /* [time][freq] */
 	double *freq, *time;
-	int fs, ts;
 } FFT;
 
 typedef struct {
@@ -38,7 +38,8 @@ extern int preview_destroy();
 
 extern int edit(int,int,double **);
 
-double max, min, thresh;
+double max, min, thresh, sp_floor;
+double hipass, lopass;
 int floor_num, floor_dem;
 const char *name;
 int range[2];
