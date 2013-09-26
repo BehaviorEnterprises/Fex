@@ -18,7 +18,7 @@ static void buttonrelease(XEvent *);
 static void expose(XEvent *);
 static void keypress(XEvent *);
 static void motionnotify(XEvent *);
-//static void xcairo_help();
+static void xcairo_help();
 static void zoom();
 
 static Display *dpy;
@@ -145,7 +145,8 @@ void keypress(XEvent *e){
 					zoom();
 				}
 			}
-			//else if (key == XK_h) xcairo_help();
+			else if (key == XK_h) xcairo_help();
+			else if (key == XK_F1) xcairo_help();
 			else if (key == XK_e) {
 				Window w1, w2; int i1,i2,sx,sy; unsigned int u1;
 				XQueryPointer(dpy,win,&w1,&w2,&i1,&i2,&sx,&sy,&u1);
@@ -173,6 +174,28 @@ void motionnotify(XEvent *e){
 					fft->amp[i][j] = min;
 	}
 	running = False;
+}
+
+/* HELP IS A WORK IN PROGRESS */
+void xcairo_help() {
+	Window hwin = XCreateSimpleWindow(dpy,win,80,80,sw-160,sh-160,0,2,0);
+	XMapWindow(dpy,hwin);
+	cairo_surface_t *t = cairo_xlib_surface_create(dpy,hwin,
+			DefaultVisual(dpy,scr),sw-160,sh-160);
+	cairo_t *h = cairo_create(t);
+	cairo_surface_destroy(t);
+	cairo_surface_t *img = cairo_image_surface_create_from_png(
+			"./help.png");
+	cairo_scale(h,(sw-160)/641.0,(sh-160)/481.0);
+	cairo_set_source_surface(h,img,0,0);
+	cairo_paint(h);
+	XFlush(dpy);
+	cairo_surface_destroy(img);
+	cairo_destroy(h);
+	XEvent ev;
+	while (!XNextEvent(dpy,&ev)) if (ev.type == KeyPress) break;
+	XDestroyWindow(dpy,hwin);
+	XFlush(dpy);
 }
 
 void zoom() {
@@ -241,7 +264,7 @@ ffth = i - ffty;
 	ty = fontstruct->ascent + 2;
 	bw = fontstruct->descent + 4 + ty;
 	XSetWindowAttributes wa;
-	wa.override_redirect = True;
+	wa.override_redirect = False;
 	win = XCreateWindow(dpy,root,0,0,sw,sh,0,DefaultDepth(dpy,scr),
 			CopyFromParent, DefaultVisual(dpy,scr),CWOverrideRedirect, &wa);
 	char curs_data = 0;

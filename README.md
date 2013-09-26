@@ -1,4 +1,4 @@
-NOTE: there have been significant changes recently that have not yet been ported to the OS X version.
+NOTE: there have been significant changes recently that have not yet been ported to the OS X version (J McClure 24 Sep 2013)
 
 #FEX
 FEX is a task specific tools for specific research purposes.  The relevant usage details will be elaborated in an upcoming publication.
