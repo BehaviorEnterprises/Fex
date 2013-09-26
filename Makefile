@@ -28,6 +28,7 @@ tarball: clean
 
 install: ${PROG}
 	@install -Dm755 ${PROG} ${DESTDIR}${PREFIX}/bin/${PROG}
+	@install -Dm644 help.png ${DESTDIR}${PREFIX}/share/${PROG}/help.png
 
 mac_install: ${PROG}
 	@cp ${PROG} ${DESTDIR}${PREFIX}/bin/${PROG}

@@ -10,6 +10,8 @@
 #include <X11/XKBlib.h>
 #include <X11/cursorfont.h>
 
+#define HELP_FILE "/usr/share/fex/help.png"
+
 //static const char *font = "-*-terminus-bold-*-*-*-14-*-*-*-*-*-*-*";
 static const char *font = "-misc-fixed-medium-r-normal--13-120-75-75-c-70-*-*";
 
@@ -184,8 +186,7 @@ void xcairo_help() {
 			DefaultVisual(dpy,scr),sw-160,sh-160);
 	cairo_t *h = cairo_create(t);
 	cairo_surface_destroy(t);
-	cairo_surface_t *img = cairo_image_surface_create_from_png(
-			"./help.png");
+	cairo_surface_t *img = cairo_image_surface_create_from_png(HELP_FILE);
 	cairo_scale(h,(sw-160)/641.0,(sh-160)/481.0);
 	cairo_set_source_surface(h,img,0,0);
 	cairo_paint(h);
