@@ -157,7 +157,7 @@ FFT *create_fft(Wave *w, int win, int hop) {
 const char *command_line(int argc, const char **argv) {
 	const char *winfun = NULL, *wavname = NULL;
 	char a; int i;
-	thresh = -24.0;
+	thresh = -14.0;
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] == '-') {
 			a = (argv[i][1] == '-' ? argv[i][2] : argv[i][1]);
