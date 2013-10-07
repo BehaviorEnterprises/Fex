@@ -265,7 +265,7 @@ ffth = i - ffty;
 	ty = fontstruct->ascent + 2;
 	bw = fontstruct->descent + 4 + ty;
 	XSetWindowAttributes wa;
-	wa.override_redirect = False;
+	wa.override_redirect = True;
 	win = XCreateWindow(dpy,root,0,0,sw,sh,0,DefaultDepth(dpy,scr),
 			CopyFromParent, DefaultVisual(dpy,scr),CWOverrideRedirect, &wa);
 	char curs_data = 0;

@@ -1,0 +1,22 @@
+#!/bin/bash
+
+if [[ -n "$1" ]]; then
+	DIR="$1"
+else
+	DIR="$(Xdialog --title "FEX: Frequency Excursion Calculator" --center --no-buttons --stdout --fselect ~ 40 120)"
+fi
+
+if [[ -d "$DIR" ]]; then
+	OUT="$DIR/$(date +%Y%m%d_%H%M).csv"
+	if [[ -f "$OUT" ]]; then OUT="_$OUT"; fi
+	echo -e "File\tFEX" > "$OUT"
+	for F in $(find $DIR -regex ".*\(wav\|WAV\)"); do
+		echo -en "$(basename $F)\t" >> "$OUT"
+		fex $F >> "$OUT"
+	done
+elif [[ -f "$DIR" ]]; then
+	FE="$(fex $DIR)"
+	Xdialog --title "Frequency Excursion" \
+		--msgbox "$(basename $DIR): $FE" 10 80
+fi
+
