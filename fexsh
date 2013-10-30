@@ -14,7 +14,7 @@ echo -e "Song\tF.E." > "$out"
 # loop through selected files
 for file in ${filelist[@]}; do
 	song_file="$(basename $file)"
-	song_name="${song%.*}"
+	song_name="${song_file%.*}"
 	fe="$(fex "$file")"
 	# if only one file, display result in dialog
 	if [[ $nfiles -eq 1 ]]; then
@@ -29,6 +29,6 @@ if [[ $nfiles -gt 1 ]]; then
 	data="$(zenity --title "FEX: save data file" \
 			--file-selection --save --confirm-overwrite)"
 	[[ -n $data ]] && cp "$out" "$data"
-else
-	rm -f $out
 fi
+
+rm -f $out
