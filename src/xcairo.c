@@ -105,6 +105,7 @@ void keypress(XEvent *e){
 	unsigned int mod = (e->xkey.state&~Mod2Mask)&~LockMask;
 	if (key == XK_Escape) {
 		eraser = False;
+		XDefineCursor(dpy,win,crosshair_cursor);
 	}
 	else if (mod == ControlMask) {
 		if(key == XK_q) review = 0;
@@ -246,10 +247,10 @@ int preview_create(int w, int h, FFT *fftp) {
 	fft = fftp;
 	fftw = w; ffth = h;
 	int i,j;
-for (i = 0; i < fft->fs && fft->freq[i] < hipass; i++);
-ffty = i;
-for (i++; i < fft->fs && fft->freq[i] < lopass; i++);
-ffth = i - ffty;
+	for (i = 0; i < fft->fs && fft->freq[i] < hipass; i++);
+	ffty = i;
+	for (i++; i < fft->fs && fft->freq[i] < lopass; i++);
+	ffth = i - ffty;
 	brushw = fftw/20; brushh = ffth/15;
 	restart = 0; zoomer = 0; eraser = False;
 	dpy = XOpenDisplay(0x0);
@@ -318,9 +319,23 @@ ffth = i - ffty;
 			fftw,ffth,stride);
 	cairo_set_source_rgba(c,1.0,1.0,1.0,1.0);
 	cairo_mask_surface(c,mask,0,0);
+	return 0;
+}
+
+int preview_threshold_start() {
+	cairo_set_source_rgba(c,0.0,0.75,1.0,0.5);
+}
+
+int preview_threshold(int x, int y) {
+	cairo_new_sub_path(c);
+	cairo_arc(c,x,y-ffty,radius,0,2*M_PI);
+	return 0;
+}
+
+int preview_peak_start() {
+	cairo_fill(c);
 	cairo_set_source_rgba(c,1.0,0.2,0.0,1.0);
 	cairo_set_source_rgba(l,1.0,0.9,0.0,1.0);
-	return 0;
 }
 
 int preview_peak(int x, int y) {

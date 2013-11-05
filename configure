@@ -10,5 +10,5 @@ case $platform in
 	win|win95) target="win" ;;
 esac
 
-sed 's/^'$target'_//' Makefile.in > Makefile
+sed 's/^'$target'_//' src/Makefile.in > Makefile
 

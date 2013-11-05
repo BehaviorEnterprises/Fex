@@ -32,6 +32,8 @@ typedef struct {
 extern int die(const char *);
 
 extern int preview_create(int, int,FFT *);
+extern int preview_threshold(int,int);
+extern int preview_peak_start();
 extern int preview_peak(int,int);
 extern int preview_test(long double, long double);
 extern int preview_destroy();

@@ -261,6 +261,11 @@ int main(int argc, const char **argv) {
 		while (previewing) {
 			lt = fft->time[0]; lf = fft->freq[0];
 			ex = 0.0; tex = 0.0;
+			preview_threshold_start();
+			for (i = 1; i < fft->ts; i++)
+				for (j = 0; j < fft->fs; j++)
+					if (fft->amp[i][j] > thresh) preview_threshold(i,j);
+			preview_peak_start();
 			for (i = 1; i < fft->ts; i++) {
 				for (f = 0, j = 0; j < fft->fs; j++)
 					if ( (fft->amp[i][j] > fft->amp[i][f] || !f) )

@@ -1,26 +1,26 @@
 
 PROG		=	fex
 VER		=	0.3a
-SOURCE	=	fex.c
-HEADERS	=	fex.h
+SOURCE	=	src/fex.c
+HEADERS	=	src/fex.h
 PREFIX	?=	/usr
 CC			?=	gcc
 CFLAGS	+=	`pkg-config --cflags sndfile fftw3`
 LDFLAGS	+=	`pkg-config --libs sndfile fftw3` -lm
 DEFS		=	-DPROGRAM_NAME=${PROG} -DPROGRAM_VER=${VER}
 
-linux_SOURCE	+= xcairo.c
+linux_SOURCE	+= src/xcairo.c
 linux_CFLAGS	+= `pkg-config --cflags x11 cairo`
 linux_LDFLAGS	+= `pkg-config --libs x11 cairo`
-mac_SOURCE		+= osxcg.m
+mac_SOURCE		+= src/osxcg.m
 mac_CFLAGS		+= -framework Cocoa
-win_SOURCE		+= wingdi.c
+win_SOURCE		+= src/wingdi.c
 
 ${PROG}: ${SOURCE} ${HEADERS}
 	@${CC} -o ${PROG} ${DEFS} ${SOURCE} ${CFLAGS} ${LDFLAGS}
 
 clean:
-	@rm -f ${PROG}
+	@rm -f ${PROG} Makefile
 
 tarball: clean
 	@rm -f ${PROG}-*.tar.gz
@@ -28,8 +28,8 @@ tarball: clean
 
 linux_install: ${PROG}
 	@install -Dm755 ${PROG} ${DESTDIR}${PREFIX}/bin/${PROG}
-	@install -Dm755 ${PROG}sh ${DESTDIR}${PREFIX}/bin/${PROG}sh
-	@install -Dm644 help.png ${DESTDIR}${PREFIX}/share/${PROG}/help.png
+	@install -Dm755 src/${PROG}sh ${DESTDIR}${PREFIX}/bin/${PROG}sh
+	@install -Dm644 share/help.png ${DESTDIR}${PREFIX}/share/${PROG}/help.png
 
 mac_install: ${PROG}
 	@echo "mac port development has lagged and may not be fully functional"
