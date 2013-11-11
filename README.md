@@ -9,16 +9,17 @@ All versions are currently experimental, and undoubtedly have bugs.  But they ar
 
 ##Building Fex:
 
-1. Download the source:
-	1. install git and `git clone http://github.com/TrilbyWhite/fex.git`, or
-	1. download and uncompress zip file on the right side of the github web interface
+###Download the source:
+1. install git and `git clone http://github.com/TrilbyWhite/fex.git`, or
+1. download and uncompress zip file on the right side of the github web interface
 
-1. Build:
-	1. Arch Linux: use included PKGBUILD
-	1. Other Linux:
-		1. install all dependencies: cairo, libsndfile, and fftw-3.  If your distro uses split packages (eg unbuntoo) you'll also need the *-dev package(s)
-		1. navigate to the fex directory then run the following:
+###Build:
+1. Arch Linux: use included PKGBUILD
+1. Other Linux:
+	1. install all dependencies: cairo, libsndfile, and fftw-3.  If your distro uses split packages (eg unbuntoo) you'll also need the -dev package(s)
+	1. navigate to the fex directory then run the following:
 ```bash
 ./configure
 make
 sudo make install
+```
