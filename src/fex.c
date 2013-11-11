@@ -251,42 +251,48 @@ int main(int argc, const char **argv) {
 	hipass = 1.25; lopass = 15.0;
 	double lt, lf;
 	long double ex, tex;
+	if (interactive) preview_init();
 	while (restart) {
+		restart = 1;
 		Wave *w = read_wave(command_line(argc,argv));
-		FFT *fft = create_fft(w,winlen,hop);
-		free_wave(w);
-		if (interactive) preview_create(fft->ts,fft->fs,fft);
-		previewing = 1;
-		ex = tex = 0.0;
-		while (previewing) {
-			lt = fft->time[0]; lf = fft->freq[0];
-			ex = 0.0; tex = 0.0;
-			preview_threshold_start();
-			for (i = 1; i < fft->ts; i++)
-				for (j = 0; j < fft->fs; j++)
-					if (fft->amp[i][j] > thresh) preview_threshold(i,j);
-			preview_peak_start();
-			for (i = 1; i < fft->ts; i++) {
-				for (f = 0, j = 0; j < fft->fs; j++)
-					if ( (fft->amp[i][j] > fft->amp[i][f] || !f) )
-						f = j;
-				if (f > 0 && fft->amp[i][f] > thresh ) {
-					if (lt != fft->time[0]) {
-						ex += sqrtf((fft->freq[f] - lf) * (fft->freq[f] - lf) +
-								(fft->time[i] - lt) * (fft->time[i] - lt));
-						tex += fft->time[i] - lt;
+		while (restart == 1) {
+			FFT *fft = create_fft(w,winlen,hop);
+			if (interactive) preview_create(fft->ts,fft->fs,fft);
+			previewing = 1;
+			ex = tex = 0.0;
+			while (previewing) {
+				lt = fft->time[0]; lf = fft->freq[0];
+				ex = 0.0; tex = 0.0;
+				preview_threshold_start();
+				for (i = 1; i < fft->ts; i++)
+					for (j = 0; j < fft->fs; j++)
+						if (fft->amp[i][j] > thresh) preview_threshold(i,j);
+				preview_peak_start();
+				for (i = 1; i < fft->ts; i++) {
+					for (f = 0, j = 0; j < fft->fs; j++)
+						if ( (fft->amp[i][j] > fft->amp[i][f] || !f) )
+							f = j;
+					if (f > 0 && fft->amp[i][f] > thresh ) {
+						if (lt != fft->time[0]) {
+							ex += sqrtf((fft->freq[f] - lf) *
+									(fft->freq[f] - lf) + (fft->time[i] - lt) *
+									(fft->time[i] - lt));
+							tex += fft->time[i] - lt;
+						}
+						lt = fft->time[i]; lf = fft->freq[f];
+						if (interactive) preview_peak(i,f);
 					}
-					lt = fft->time[i]; lf = fft->freq[f];
-					if (interactive) preview_peak(i,f);
 				}
+				if (interactive) previewing = preview_test(ex,tex);
+				else previewing = 0;
 			}
-			if (interactive) previewing = preview_test(ex,tex);
-			else previewing = 0;
+			free_fft(fft);
+			if (interactive) restart = preview_destroy();
+			else restart = 0;
 		}
-		free_fft(fft);
-		if (interactive) restart = preview_destroy();
-		else restart = 0;
+		free_wave(w);
 	}
+	if (interactive) preview_end();
 	printf("%Lf\n",ex/tex);
 	return 0;
 }

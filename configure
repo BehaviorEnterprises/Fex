@@ -5,9 +5,15 @@ platform=$(uname)
 platform=${platform,,}
 
 case $platform in
-	Linux|linux) target="linux" ;;
-	mac|osx) target="mac" ;;
-	win|win95) target="win" ;;
+	Linux|linux)
+		target="linux"
+		;;
+#	mac|osx) target="mac" ;;
+#	win|win95) target="win" ;;
+	*)
+		echo "Only the linux version is currently functional"
+		exit
+		;;
 esac
 
 sed 's/^'$target'_//' src/Makefile.in > Makefile

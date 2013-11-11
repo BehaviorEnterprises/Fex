@@ -80,7 +80,7 @@ void draw() {
 	XDrawString(dpy,buf,gc,x,ty,name,strlen(name));
 	if (zoomer) {
 		cairo_set_source_rgba(c,0.0,0.5,0.1,1.0);
-		cairo_move_to(c,wx,ffty);
+		cairo_move_to(c,wx,0);
 		cairo_line_to(c,wx,ffth);
 		cairo_move_to(c,0,wy-ffty);
 		cairo_line_to(c,fftw,wy-ffty);
@@ -109,10 +109,10 @@ void keypress(XEvent *e){
 	}
 	else if (mod == ControlMask) {
 		if(key == XK_q) review = 0;
-		else if (key == XK_r) { restart = 1; review = 0; }
+		else if (key == XK_r) { restart = 1; review = 0;}
 		else if (key == XK_Up) thresh += 0.25;
 		else if (key == XK_Down) thresh -= 0.25; 
-		else if (key == XK_Right) { restart=1; review=0; sp_floor+=1;}
+		else if (key == XK_Right) { restart=1;  review=0; sp_floor+=1;}
 		else if (key == XK_Left) { restart=1; review=0; sp_floor-=1;}
 		running = False;
 	}
@@ -164,10 +164,10 @@ void keypress(XEvent *e){
 }
 
 void motionnotify(XEvent *e){
-	if (!eraser) return;
 	sx = e->xbutton.x; sy = e->xbutton.y;
 	wx = (sx - bw)/scx;
 	wy = ffth + ffty + (sy - bw)/scy;
+	if (!eraser) {draw(); return;}
 	if (wx > 0 && wx < fftw && wy > ffty && wy < ffty+ffth &&
 			((e->xbutton.state & Button1Mask) == Button1Mask)) {
 		int i,j;
@@ -239,20 +239,11 @@ void zoom() {
 		hipass = lopass;
 	}
 	running = False;
-	restart = 1;
+	restart = 2;
 	review = 0;
 }
 
-int preview_create(int w, int h, FFT *fftp) {
-	fft = fftp;
-	fftw = w; ffth = h;
-	int i,j;
-	for (i = 0; i < fft->fs && fft->freq[i] < hipass; i++);
-	ffty = i;
-	for (i++; i < fft->fs && fft->freq[i] < lopass; i++);
-	ffth = i - ffty;
-	brushw = fftw/20; brushh = ffth/15;
-	restart = 0; zoomer = 0; eraser = False;
+int preview_init() {
 	dpy = XOpenDisplay(0x0);
 	scr = DefaultScreen(dpy);
 	root = RootWindow(dpy,scr);
@@ -284,6 +275,23 @@ int preview_create(int w, int h, FFT *fftp) {
 	XSetBackground(dpy,gc,BlackPixel(dpy,scr));
 	XFlush(dpy);
 	XWarpPointer(dpy,None,win,0,0,0,0,sw/2,sh/2);
+	return 0;
+}
+
+int preview_create(int w, int h, FFT *fftp) {
+XSetForeground(dpy,gc,BlackPixel(dpy,scr));
+XFillRectangle(dpy,buf,gc,0,0,sw,sh);
+XSetForeground(dpy,gc,WhitePixel(dpy,scr));
+	fft = fftp;
+	fftw = w; ffth = h;
+	int i,j;
+	for (i = 0; i < fft->fs && fft->freq[i] < hipass; i++);
+	ffty = i;
+	for (i++; i < fft->fs && fft->freq[i] < lopass; i++);
+	ffth = i - ffty;
+	brushw = fftw/20; brushh = ffth/15;
+	restart = 0; zoomer = 0; eraser = False;
+//
 	cairo_surface_t *t = cairo_xlib_surface_create(dpy,buf,
 			DefaultVisual(dpy,scr),sw,sh);
 	c = cairo_create(t);
@@ -385,12 +393,16 @@ int preview_destroy() {
 	cairo_destroy(c);
 	cairo_destroy(l);
 	free(alphas);
+	return restart;
+}
+
+int preview_end() {
 	XFreeFont(dpy,fontstruct);
 	XFreeGC(dpy,gc);
 	XFreePixmap(dpy,pbuf);
 	XFreePixmap(dpy,buf);
 	XDestroyWindow(dpy,win);
 	XCloseDisplay(dpy);
-	return restart;
+	return 0;
 }
 

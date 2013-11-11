@@ -1,9 +1,7 @@
-NOTE: there have been significant changes recently that have not yet been ported to the OS X version (J McClure 24 Sep 2013)
-
 #FEX
-FEX is a task specific tools for specific research purposes.  The relevant usage details will be elaborated in an upcoming publication.
+FEX is a task specific tool for specific research purposes.  The relevant usage details will be elaborated in an upcoming publication.
 
-FEX is available for linux/bsd as XCairoFex or for Mac OSX (>=10.5) as MacFex.
+FEX is available for linux/bsd as XCairoFex or for Mac OSX (>=10.5) as MacFex. (MacFex has not been updated with recent changes to the core fex code and is currently non-functional).
 
 A Windows version is in the early stages - development of this port will depend on user feedback.
 
@@ -30,6 +28,3 @@ sudo make install
     C1) Install all dependencies via your build system (eg MacPorts): libsndfile, fftw-3
     C2) Open Terminal.app and navigate to the fex folder
     C4) In that folder, run `make` and `sudo make install`
-
-###MAC OSX SHORTCUT:
-- if you have a fully functional MacPorts installation, you can download just the macinstall.sh file, and execute that script which will automate all the above steps.

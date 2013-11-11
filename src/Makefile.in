@@ -1,6 +1,6 @@
 
 PROG		=	fex
-VER		=	0.3a
+VER		=	1.0a
 SOURCE	=	src/fex.c
 HEADERS	=	src/fex.h
 PREFIX	?=	/usr
