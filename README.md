@@ -18,6 +18,7 @@ All versions are currently experimental, and undoubtedly have bugs.  But they ar
 1. Other Linux:
 	1. install all dependencies: cairo, libsndfile, and fftw-3.  If your distro uses split packages (eg unbuntoo) you'll also need the -dev package(s)
 	1. navigate to the fex directory then run the following:
+
 ```bash
 ./configure
 make
