@@ -124,11 +124,15 @@ void keypress(XEvent *e){
 		else if (key == XK_s) {
 			cairo_surface_t *pngt = cairo_xlib_surface_create(dpy,pbuf,
 					DefaultVisual(dpy,scr),sw,sh);
+			char *base_name = calloc(strlen(name),sizeof(char));
 			char *png_name = calloc(strlen(name)+8,sizeof(char));
-			sprintf(png_name,"%s_%d.png",name,shot_num++);
+			strcpy(base_name,name);
+			char *dot = strrchr(base_name,'.');
+			if (dot) *dot = '\0';
+			sprintf(png_name,"%s_%d.png",base_name,shot_num++);
 			cairo_surface_write_to_png(pngt,png_name);
 			cairo_surface_destroy(pngt);
-			free(png_name);
+			free(png_name); free(base_name);
 		}
 		if (radius < 0.01) radius = 0.01;
 		else if (radius > 10) radius = 10;
