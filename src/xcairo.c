@@ -24,7 +24,7 @@ static void xcairo_help();
 static void zoom();
 
 static Display *dpy;
-static int scr, sw, sh, sx, sy, fftw, ffth, ffty, stride,zpy;
+static int scr, sw, sh, sx, sy, fftw, ffth, ffty, stride,zpy,shot_num=0;
 static int review, restart, zoomer, ty, bw, wx, wy;
 static Window root, win;
 static Pixmap buf, pbuf, zmap;
@@ -121,6 +121,15 @@ void keypress(XEvent *e){
 		else if (key == XK_Down) { radius -= 0.05; running=False; }
 		else if (key == XK_Left) { line_width -= 0.1; running=False; }
 		else if (key == XK_Right) { line_width += 0.1; running=False; }
+		else if (key == XK_s) {
+			cairo_surface_t *pngt = cairo_xlib_surface_create(dpy,pbuf,
+					DefaultVisual(dpy,scr),sw,sh);
+			char *png_name = calloc(strlen(name)+8,sizeof(char));
+			sprintf(png_name,"%s_%d.png",name,shot_num++);
+			cairo_surface_write_to_png(pngt,png_name);
+			cairo_surface_destroy(pngt);
+			free(png_name);
+		}
 		if (radius < 0.01) radius = 0.01;
 		else if (radius > 10) radius = 10;
 		if (line_width < 0.01) line_width = 0.01;
