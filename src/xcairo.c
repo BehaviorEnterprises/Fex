@@ -62,8 +62,11 @@ void buttonrelease(XEvent *e) {
 void draw() {
 	XCopyArea(dpy,pbuf,buf,gc,0,0,sw,sh,0,0);
 	if (eraser) {
+		cairo_set_source_rgba(c,1.0,0.7,0.0,0.5);
 		cairo_rectangle(c,wx-brushw/2,wy-ffty-brushh/2,brushw,brushh);
-		cairo_fill(c);
+		cairo_fill_preserve(c);
+		cairo_set_source_rgba(c,0.9,0.6,0.0,1.0);
+		cairo_stroke(c);
 	}
 	char str[256]; int x = bw + 4;
 	if (wx > -1 && wx < fft->ts && wy > -1 && wy < fft->fs)
