@@ -1,10 +1,14 @@
 #!/bin/bash
 
 IFS="|"
-# select file(s)
-filelist=( $(zenity \
-		--title "FEX: Frequency Excursion Calculator" \
-		--file-selection --multiple --separator="|") )
+if [[ $# -eq 1 ]]; then
+	filelist=( $1 )
+else
+	# select file(s)
+	filelist=( $(zenity \
+			--title "FEX: Frequency Excursion Calculator" \
+			--file-selection --multiple --separator="|") )
+fi
 nfiles=${#filelist[@]}
 
 # create a temporary data file
@@ -18,7 +22,7 @@ for file in ${filelist[@]}; do
 	fe="$(fex "$file")"
 	# if only one file, display result in dialog
 	if [[ $nfiles -eq 1 ]]; then
-		zenity --text-info --title "FEX: $song" --text  "F.E. = $fe"
+		zenity --info --title "FEX: $song" --text  "F.E. = $fe"
 	# else write to the data file
 	else
 		echo -e "$song_name\t$fe" >> $out
