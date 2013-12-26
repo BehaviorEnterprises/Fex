@@ -72,15 +72,20 @@ int move(double x, double y) {
 	if ( xoff < spect->fft_w * (1.0/xsc - 1.0) )
 		xoff = spect->fft_w * (1.0/xsc - 1.0);
 	if ( xoff > 0) xoff = 0;
-	spectro_draw();
-	XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
+	if (x || y) { /* don't redraw for offset checks */
+		spectro_draw();
+		XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
+	}
 }
 
 int zoom(double f) {
+	double px = xsc, py = ysc;
 	xsc += f; ysc += f;
 	if (xsc < 1.0) xsc = 1.0;
 	if (ysc < 1.0) ysc = 1.0;
-	// TODO use mouse x,y to adjust offsets ??
+	xoff += (spect->fft_w/xsc - spect->fft_w/px) / 2.0;
+	yoff += (spect->fft_h/py - spect->fft_h/ysc) / 2.0;
+	if (f < 0) move(0,0); /* check offsets for bounds */
 	spectro_draw();
 	XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
 }
@@ -262,11 +267,11 @@ int create_xlib() {
 	scr = DefaultScreen(dpy);
 	root = DefaultRootWindow(dpy);
 	gc = DefaultGC(dpy,scr);
-	ww = DisplayWidth(dpy,scr) * 0.85;
-	wh = DisplayHeight(dpy,scr) * 0.85;
+	ww = DisplayWidth(dpy,scr);
+	wh = DisplayHeight(dpy,scr);
 	/* create windows */
-	win = XCreateSimpleWindow(dpy, root, 0, 0, ww, wh, 0, 0, 0);
 	buf = XCreatePixmap(dpy, root, ww, wh, DefaultDepth(dpy,scr));
+	win = XCreateSimpleWindow(dpy,root,0,0,(ww*=0.85),(wh*=0.85),0,0, 0);
 	XSelectInput(dpy, win, EVENT_MASK | SubstructureRedirectMask);
 	XStoreName(dpy, win, "FEX: Frequency Excursion Calculator");
 	WM_DELETE_WINDOW = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
