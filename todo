@@ -1,5 +1,6 @@
 
 - finish localization
-- info window
+- cropping
+- info window (crop region)
 - xlib: set ww + wh on startup for tiling WMs
 

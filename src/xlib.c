@@ -13,6 +13,7 @@ static void clientmessage(XEvent *);
 static void configurenotify(XEvent *);
 static void expose(XEvent *);
 static void keypress(XEvent *);
+static void motionnotify(XEvent *);
 
 static int erase(int, int);
 static int eraser_cursor(int, int);
@@ -23,7 +24,7 @@ static int threshold(double);
 static int zoom(double);
 
 static Display *dpy;
-static int scr, ww, wh;
+static int scr, ww, wh, mx, my;
 static GC gc;
 static Window root, win;
 static Pixmap buf, ibuf, sbuf;
@@ -31,7 +32,7 @@ static Atom WM_DELETE_WINDOW;
 static cairo_t *ictx, *sctx;
 static Bool running = True;
 static double xsc = 1.0, ysc = 1.0, xoff = 0.0, yoff = 0.0;
-static int mode = 0, ew = 32, eh = 64;
+static int mode = 0, ew = 31, eh = 64;
 static char e_col[2][8];
 static void (*handler[LASTEvent])(XEvent *) = {
 	[ButtonPress]			= buttonpress,
@@ -39,6 +40,7 @@ static void (*handler[LASTEvent])(XEvent *) = {
 	[ConfigureNotify]		= configurenotify,
 	[Expose]					= expose,
 	[KeyPress]				= keypress,
+	[MotionNotify]			= motionnotify,
 };
 
 #include "xlib_toolwin.c"
@@ -149,7 +151,10 @@ void keypress(XEvent *ev) {
 		mode ^= MODE_ERASE;
 		eraser_cursor(0,0);
 	}
-	else if (sym == XK_Escape) mode = MODE_NULL;
+	else if (sym == XK_Escape) {
+		mode = MODE_NULL;
+		eraser_cursor(0,0);
+	}
 	else if (mod == ControlMask && sym == XK_j) zoom(0.025);
 	else if (mod == ControlMask && sym == XK_k) zoom(-0.025);
 	else if (mod == ControlMask && sym == XK_h) return;
@@ -169,6 +174,11 @@ void keypress(XEvent *ev) {
 	XSync(dpy,True);
 }
 
+void motionnotify(XEvent *ev) {
+	mx = spect->fft_w * ev->xmotion.x / (float) ww - 1.0 * xoff;
+	my = spect->fft_h * (1.0 - ev->xmotion.y / (float) wh) - 1.0 * yoff;
+	if (info->vis && info->draw) info->draw(info);
+}
 
 int erase(int x, int y) {
 	int x1, x2, y1, y2, i, j;
@@ -212,6 +222,9 @@ int erase(int x, int y) {
 		spectro_points();
 		spectro_draw();
 		XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
+		mx = spect->fft_w * e.xmotion.x / (float) ww - 1.0 * xoff;
+		my = spect->fft_h * (1.0 - e.xmotion.y / (float) wh) - 1.0 * yoff;
+		if (info->vis && info->draw) info->draw(info);
 		XCheckMaskEvent(dpy, ButtonReleaseMask, &e);
 		XSync(dpy,True);
 	}
@@ -273,6 +286,7 @@ int sp_floor(double f) {
 	spectro_spec();
 	spectro_draw();
 	XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
+	if (info->vis && info->draw) info->draw(info);
 }
 
 int threshold(double f) {
@@ -281,6 +295,7 @@ int threshold(double f) {
 	spectro_points();
 	spectro_draw();
 	XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
+	if (info->vis && info->draw) info->draw(info);
 }
 
 int zoom(double f) {
@@ -308,7 +323,8 @@ int create_xlib() {
 	/* create windows */
 	buf = XCreatePixmap(dpy, root, ww, wh, DefaultDepth(dpy,scr));
 	win = XCreateSimpleWindow(dpy,root,0,0,(ww*=0.85),(wh*=0.85),0,0, 0);
-	XSelectInput(dpy, win, EVENT_MASK | SubstructureRedirectMask);
+	XSelectInput(dpy, win, EVENT_MASK | SubstructureRedirectMask |
+			PointerMotionMask);
 	XStoreName(dpy, win, "FEX: Frequency Excursion Calculator");
 	WM_DELETE_WINDOW = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
 	XSetWMProtocols(dpy, win, &WM_DELETE_WINDOW, 1);

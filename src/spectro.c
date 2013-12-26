@@ -112,7 +112,8 @@ int spectro_points() {
 	set_color(l,RGBA_LINES);
 	int i, j, f;
 	double lt = spect->fft->time[0], lf = spect->fft->freq[0];
-	double fex = 0.0, tex = 0.0;
+	spect->pex = 0.0;
+	spect->tex = 0.0;
 	/* loop through time bins */
 	for (i = spect->fft_x; i < spect->fft_w + spect->fft_x; i++) {
 		/* find maximum (non masked) frequency in time bin */
@@ -124,7 +125,10 @@ int spectro_points() {
 		/* add points and do calculations if f is above threshold */
 		if (f > 0 && spect->fft->amp[i][f] > conf.thresh) {
 			if (lt != spect->fft->time[0]) {
-				// TODO calculations of fex + tex
+				spect->pex += sqrt(
+					(spect->fft->freq[f] - lf) * (spect->fft->freq[f] - lf) +
+					(spect->fft->time[i] - lt) * (spect->fft->time[i] - lt) );
+				spect->tex += spect->fft->time[i] - lt;
 			}
 			lt = spect->fft->time[i];
 			lf = spect->fft->freq[f];
@@ -135,10 +139,9 @@ int spectro_points() {
 			cairo_arc(p,
 					(i - spect->fft_x) * conf.scale + conf.scale / 2,
 					(f - spect->fft_y) * conf.scale + conf.scale / 2,
-					//i - spect->fft_x,
-					//f - spect->fft_y,
 					conf.col[RGBA_POINTS].w,0,2*M_PI);
 		}
+		spect->fex = spect->pex / spect->tex;
 	}
 	cairo_fill(p);
 	cairo_stroke(l);

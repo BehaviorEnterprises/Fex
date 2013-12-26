@@ -56,6 +56,7 @@ typedef struct Spectro {
 	cairo_surface_t *m_spec, *m_thresh, *s_points;
 	FFT *fft;
 	int fft_x, fft_y, fft_w, fft_h;
+	double pex, tex, fex;
 } Spectro;
 
 typedef struct RGBA {
@@ -69,7 +70,7 @@ typedef struct Config {
 	int winlen, hop, font_size;
 	WindowFunction *win;
 	RGBA col[RGBA_LAST];
-	cairo_font_face_t *font;
+	cairo_font_face_t *font, *bfont;
 } Config;
 
 /* main.c */

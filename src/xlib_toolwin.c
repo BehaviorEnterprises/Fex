@@ -21,33 +21,62 @@ static int toolwin_win_destroy(ToolWin *);
 
 static ToolWin *info, *help;
 static char *help_name = "FEX Help";
+static cairo_text_extents_t ext;
 
 #define MAX_STRING	256
-#define A_LEFT		0
-#define A_CENTER	1
-#define A_RIGHT	2
+#define MARGIN		4.0
+#define A_LEFT		0x00
+#define A_CENTER	0x01
+#define A_RIGHT	0x02
 int toolwin_printf(ToolWin *tw, int align, char *fmt, ...) {
 	char str[MAX_STRING];
 	va_list arg;
 	va_start(arg, fmt);
 	vsprintf(str, fmt, arg);
 	va_end(arg);
-	cairo_text_extents_t ext;
 	cairo_text_extents(tw->ctx,str,&ext);
-	double x = (align == A_RIGHT ? tw->w - ext.width - 2.0 :
-			(align == A_CENTER ? (tw->w - ext.width) / 2.0 : 2.0));
-	cairo_rel_move_to(tw->ctx, x, ext.height);
+	double x = (align == A_RIGHT ? tw->w - ext.x_advance - MARGIN :
+			(align == A_CENTER ? (tw->w - ext.x_advance) / 2.0 : MARGIN));
+	cairo_rel_move_to(tw->ctx, x, conf.font_size);
 	cairo_show_text(tw->ctx,str);
-	cairo_rel_move_to(tw->ctx, -1.0 * ext.width - x, ext.height / 2.0);
+	cairo_rel_move_to(tw->ctx, -1.0 * ext.x_advance - x, conf.font_size / 3.0);
+	return 0;
+}
+
+int toolwin_split_printf(ToolWin *tw, char *bold, char *fmt, ...) {
+	char str[MAX_STRING];
+	va_list arg;
+	va_start(arg, fmt);
+	vsprintf(str, fmt, arg);
+	va_end(arg);
+	cairo_set_font_face(tw->ctx, conf.bfont);
+	cairo_text_extents(tw->ctx,bold,&ext);
+	cairo_rel_move_to(tw->ctx, MARGIN, conf.font_size);
+	cairo_show_text(tw->ctx,bold);
+	cairo_rel_move_to(tw->ctx, -1.0 * ext.x_advance - MARGIN, 0);
+	cairo_set_font_face(tw->ctx, conf.font);
+	cairo_text_extents(tw->ctx,str,&ext);
+	cairo_rel_move_to(tw->ctx, tw->w - ext.x_advance - MARGIN, 0);
+	cairo_show_text(tw->ctx,str);
+	cairo_rel_move_to(tw->ctx, MARGIN - tw->w, conf.font_size / 3.0);
 	return 0;
 }
 
 int info_draw(ToolWin *tw) {
 	toolwin_backing(tw);
-	cairo_move_to(tw->ctx, 0, 4);
 	cairo_set_source_rgba(tw->ctx,0,0,0,1.0);
-	toolwin_printf(tw, A_CENTER, "XXX sec, XXX KHz");
-	toolwin_printf(tw, A_LEFT, "Threshold: %.3lf", -1.0 * conf.thresh);
+	cairo_set_font_face(tw->ctx, conf.bfont);
+	cairo_move_to(tw->ctx, 0, 8);
+	toolwin_printf(tw, A_CENTER, "%.2lf sec, %.2lf KHz",
+			spect->fft->time[mx],spect->fft->freq[my]);
+	cairo_rel_move_to(tw->ctx,0,12);
+	toolwin_split_printf(tw, "Threshold:", "%.3lf", -1.0 * conf.thresh);
+	toolwin_split_printf(tw, "Spectrogram Floor:", "%.3lf", -1.0 * conf.spect_floor);
+	toolwin_split_printf(tw, "Path Length:","%.3lf", spect->pex);
+	toolwin_split_printf(tw, "Path Duration:","%.3lf", spect->tex);
+	toolwin_split_printf(tw, "Frequency Excursion:","%.3lf", spect->fex);
+	toolwin_split_printf(tw, "Crop Region:","");
+	// TODO
 	toolwin_draw(tw);
 	return 0;
 }
@@ -62,7 +91,7 @@ int toolwin_backing(ToolWin *tw) {
 int toolwin_create() {
 	info = (ToolWin *) calloc(1, sizeof(ToolWin));
 	help = (ToolWin *) calloc(1, sizeof(ToolWin));
-	info->w = 200; info->h = 340;
+	info->w = 240; info->h = 300;
 	info->name = spect->name;
 	info->vis = True;
 	info->draw = info_draw;

@@ -15,7 +15,7 @@
 #define LINE_LEN	256
 
 static FT_Library library;
-static FT_Face face;
+static FT_Face face, bface;
 static WindowFunction custom;
 static const WindowFunction windows[] = {
 	{ "hanning", 		{0.5,			0.5,			0.0,			0.0}			},
@@ -71,8 +71,7 @@ const char *configure(int argc, const char **argv) {
 	chdir(pwd);
 	if (!rc) die("unable to open configuration file");
 	char line[LINE_LEN], prefix[32], option[32], fmt[LINE_LEN];
-	char window[32], font_path[LINE_LEN];
-	char font_default[] = ""; // TODO
+	char window[32], font_path1[LINE_LEN], font_path2[LINE_LEN];
 	const char *fspec[] = { "", "%d ","%f ", "%lf ", "%s" };
 	int j, mode;
 	conf.thresh = 14.0;
@@ -115,20 +114,20 @@ const char *configure(int argc, const char **argv) {
 			if (!strncasecmp(window,windows[i].type,strlen(window)))
 				conf.win = (WindowFunction *) &windows[i];
 	if (FT_Init_FreeType(&library)) die("unable to init freetype");
-	if ( FT_New_Face(library, font_path, 0, &face) |
-			FT_Set_Pixel_Sizes(face, 0, conf.font_size) ) {
-		fprintf(stderr,"unable to load freetype font: %s\n",font_path);
-		font_path[0] = '\0';
-	}
-	if (!font_path[0] & (FT_New_Face(library, font_default, 0, &face) |
-			FT_Set_Pixel_Sizes(face, 0, conf.font_size) ) ) {
-		die("unable to load default freetype font: %s",font_default);
-	}
+	if ( FT_New_Face(library, font_path1, 0, &face) |
+			FT_Set_Pixel_Sizes(face, 0, conf.font_size) )
+		fprintf(stderr,"unable to load freetype font: %s\n",font_path1);
+	if ( FT_New_Face(library, font_path2, 0, &bface) |
+			FT_Set_Pixel_Sizes(bface, 0, conf.font_size) )
+		fprintf(stderr,"unable to load freetype font: %s\n",font_path2);
 	conf.font = cairo_ft_font_face_create_for_ft_face(face,0);
+	conf.bfont = cairo_ft_font_face_create_for_ft_face(bface,0);
 	return fname;
 }
 
 int deconfig() {
 	cairo_font_face_destroy(conf.font);
+	cairo_font_face_destroy(conf.bfont);
 	FT_Done_Face(face);
+	FT_Done_Face(bface);
 }
