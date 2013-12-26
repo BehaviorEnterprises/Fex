@@ -12,14 +12,19 @@ DEFS		=  -DPROGRAM_NAME=${PROG} -DPROGRAM_VER=${VER}
 VPATH    =  src:doc
 
 ${PROG}: ${MODULES:%=%.o}
+	@echo -e "\033[1;34m  ->\033[0m Linking $@"
 	@cd src && ${CC} -o ../${PROG} ${MODULES:%=%.o} ${LDFLAGS}
 
-xlib.o: xlib.c xlib_info.c xlib_settings.c ${HEADERS}
-	@echo -e "\033[1;34m  ->\033[0m Building $<"
+xlib.o: xlib.c xlib_toolwin.c ${HEADERS}
+	@echo -e "\033[1;34m  ->\033[0m Building $@"
+	@${CC} -c -o src/$@ $< ${CFLAGS} ${DEFS}
+
+config.o: config.c config.h ${HEADERS}
+	@echo -e "\033[1;34m  ->\033[0m Building $@"
 	@${CC} -c -o src/$@ $< ${CFLAGS} ${DEFS}
 
 %.o: %.c ${HEADERS}
-	@echo -e "\033[1;34m  ->\033[0m Building $<"
+	@echo -e "\033[1;34m  ->\033[0m Building $@"
 	@${CC} -c -o src/$@ $< ${CFLAGS} ${DEFS}
 
 install: ${PROG}

@@ -1,10 +1,5 @@
 
-- finish freetype
 - finish localization
+- info window
+- xlib: set ww + wh on startup for tiling WMs
 
-
-
-Key:
-	- todo
-	> mostly done and/or needs testing
-	X done

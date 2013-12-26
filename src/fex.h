@@ -24,9 +24,10 @@
 #define RGBA_THRESH	0x01
 #define RGBA_POINTS	0x02
 #define RGBA_LINES	0x03
-#define RGBA_ERASE	0x04
-#define RGBA_ZOOMER	0x05
-#define RGBA_LAST		0x06
+#define RGBA_ERASE1	0x04
+#define RGBA_ERASE2	0x05
+#define RGBA_CROP		0x06
+#define RGBA_LAST		0x07
 
 typedef struct Wave {
 	double *d;
@@ -65,14 +66,14 @@ typedef struct Config {
 	double thresh, spect_floor;
 	double hipass, lopass;
 	int scale;
-	int winlen, hop;
+	int winlen, hop, font_size;
 	WindowFunction *win;
 	RGBA col[RGBA_LAST];
 	cairo_font_face_t *font;
 } Config;
 
 /* main.c */
-extern int die(const char *);
+extern int die(const char *, ...);
 /* config.c */
 extern const char *configure(int, const char **);
 /* fft.c */
@@ -86,9 +87,9 @@ extern Wave *create_wave(const char *);
 extern int free_wave(Wave **);
 /* xlib.c */
 extern int create_xlib();
-extern int xlib_event_loop();
-extern cairo_t *xlib_context();
 extern int free_xlib();
+extern cairo_t *xlib_context();
+extern int xlib_event_loop();
 
 /* global data */
 Config conf;

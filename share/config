@@ -2,14 +2,13 @@
 set threshold  = 14.0
 set floor      = 40.0
 set samples    = 256
-set bandpass   = 12.0 - 200.0
-
-option window     = hanning
+set bandpass   = 12.0 200.0
+set window     = hanning
 
 color spectrogram   0.0 0.0 0.0 1.0
 color threshold     0.0 0.4 0.5 0.8
-color points        1.0 0.6 0.0 0.9
-color lines         1.0 1.0 0.0 0.9
+color points        1.0 0.6 0.0 0.9 1.0
+color lines         1.0 1.0 0.0 0.9 1.0
+color crop          0.0 1.0 0.2 0.5 1.0
 color eraser        1.0 0.7 0.0 0.6 1.0
-color zoomer        0.0 1.0 0.2 0.5 1.0
 

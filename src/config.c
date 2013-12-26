@@ -1,6 +1,21 @@
 
 #include "fex.h"
 
+#define CONF_SET	0x01
+#define CONF_COL	0x02
+
+#define C_TYPE__	0x00
+#define C_TYPE_D	0x01
+#define C_TYPE_F	0x02
+#define C_TYPE_LF	0x03
+#define C_TYPE_S	0x04
+
+#define STRING(s)		STRINGIFY(s)
+#define STRINGIFY(s)	#s
+#define LINE_LEN	256
+
+static FT_Library library;
+static FT_Face face;
 static WindowFunction custom;
 static const WindowFunction windows[] = {
 	{ "hanning", 		{0.5,			0.5,			0.0,			0.0}			},
@@ -12,9 +27,6 @@ static const WindowFunction windows[] = {
 	{ "rectangular",	{1.0,			0.0,			0.0,			0.0}			},
 };
 
-#define STRING(s)		STRINGIFY(s)
-#define STRINGIFY(s)	#s
-
 static inline void version() {
 	printf(STRING(PROGRAM_NAME) " v" STRING(PROGRAM_VER)
 ", Copyright © 2013 Jesse McClure <www.mccluresk9.com>\n"
@@ -25,31 +37,14 @@ static inline void version() {
 
 static inline void help() {
 	printf("\n"
-"USAGE\n  " STRING(PROGRAM_NAME) " <options> <wavefile>\n\n"
-"OPTIONS\n"
-"  -v                show version information then exit\n"
-"  -h                show help information then exit\n"
-"  -i                inhibit interactive plotting mode\n"
-"  -w <name>         select a windowing function (default=hanning)\n"
-"  -l <length>       dft window length in number of samples (default=256)\n"
-"  -o <offset>       offset between windows (default=window length)\n"
-"  -t <threshold>    minimum amplitude, in dB below signal max, to accept for peaks (default=24.0)\n\n"
-"WINDOW FUNCTIONS\n"
-"  Any function that can be represented as a 4-term cosine function can be\n"
-"  used for windowing.  Choose from any of the preprogrammed options below,\n"
-"  or use \"custom=a0,a1,a2,a3\" to define your own.\n\n"
-"  rectangular       rectangular (1.0,0.0,0.0,0.0)\n"
-"  hamming           Hamming (0.54,0.46,0,0).\n" 
-"  hanning           Hann (0.5,0.5,0.0,0.0) [default]\n"
-"  blackman          Blackman (0.42659,0.49656,0.076849,0.0)\n"
-"  nuttall           Nutall (0.355768,0.487396,0.144232,0.012604)\n"
-"  blacknut          Blackman-Nuttall (0.3635819,0.4891775,0.1365995,0.0106411)\n"
-"  blackharris       Blackman-Harris (0.35875,0.48829,0.14128,0.01168)\n"
-"  custom=...        select alpha values for a custom function\n\n"
-	); exit(0);
+		"USAGE\n  " STRING(PROGRAM_NAME) " <options> <wavefile>\n\n"
+		"OPTIONS\n"
+		"  -v                show version information then exit\n"
+		"  -h                show help information then exit\n"
+		"\n" );
+	exit(0);
 }
 
-#define LINE_LEN	256
 const char *configure(int argc, const char **argv) {
 	int i;
 	const char *arg, *fname = NULL, *rcname = NULL;
@@ -75,8 +70,11 @@ const char *configure(int argc, const char **argv) {
 		rc = fopen(".fexrc","r");
 	chdir(pwd);
 	if (!rc) die("unable to open configuration file");
-	char line[LINE_LEN], *lptr;
-	int col;
+	char line[LINE_LEN], prefix[32], option[32], fmt[LINE_LEN];
+	char window[32], font_path[LINE_LEN];
+	char font_default[] = ""; // TODO
+	const char *fspec[] = { "", "%d ","%f ", "%lf ", "%s" };
+	int j, mode;
 	conf.thresh = 14.0;
 	conf.spect_floor = 40.0;
 	conf.hipass = 12.0;
@@ -84,50 +82,53 @@ const char *configure(int argc, const char **argv) {
 	conf.winlen = 256;
 	conf.hop = 0;
 	conf.win = (WindowFunction *) windows;
+	struct {
+		const char *name;
+		int mode;
+		int type[5];
+		void *var[5];
+	} cf[] = {
+		#include "config.h"
+	};
 	while (fgets(line,LINE_LEN,rc)) {
 		if (line[0] == '#' || line[0] == '\n') continue;
-		line[strlen(line)-1] = '\0';
-		if ( strncmp(line,"set",3) == 0 && !(
-sscanf(line+3," threshold = %lf",&conf.thresh) == 1 ||
-sscanf(line+3," floor = %lf",&conf.spect_floor) == 1 ||
-sscanf(line+3," bandpass = %lf - %lf",&conf.hipass, &conf.lopass) == 2 ||
-sscanf(line+3," samples = %d",&conf.winlen) == 1 ||
-sscanf(line+3," scale = %d",&conf.scale) == 1 ||
-sscanf(line+3," hop = %d",&conf.hop) == 1
-				) ) {
-			fprintf(stderr,"Unrecognized config entry \"%s\"\n",line);
-		}
-		else if (strncmp(line,"option",6) == 0) {
-			if (strstr(line+6,"window")) {
-				// TODO!
-				conf.win = (WindowFunction *) windows;
-			}
-		}
-		else if (strncmp(line,"color",5) == 0) {
-			if (strstr(line+5,"spectro")) col = RGBA_SPECT;
-			else if (strstr(line+5,"thresh")) col = RGBA_THRESH;
-			else if (strstr(line+5,"point")) col = RGBA_POINTS;
-			else if (strstr(line+5,"line")) col = RGBA_LINES;
-			else if (strstr(line+5,"erase")) col = RGBA_ERASE;
-			else if (strstr(line+5,"zoom")) col = RGBA_ZOOMER;
-			else col = -1;
-			if (col < 0) 
-				fprintf(stderr,"Unrecognized config entry \"%s\"\n",line);
-			else {
-				lptr = line + 5;
-				while (*lptr == ' ' || *lptr == '\t') lptr++;
-				while (*lptr != ' ' && *lptr != '\t') lptr++;
-				if (sscanf(lptr," %lf %lf %lf %lf %lf",
-						&conf.col[col].r, &conf.col[col].g,
-						&conf.col[col].b, &conf.col[col].a,
-						&conf.col[col].w) < 4)
-					fprintf(stderr,"Unrecognized config entry \"%s\"\n",line);
+		sscanf(line,"%s %s",prefix,option);
+		if (strncasecmp(prefix,"set",3) == 0) mode = CONF_SET;
+		else if (strncasecmp(prefix,"col",3) == 0) mode = CONF_COL;
+		else fprintf(stderr,"bad config entry: %s",line);
+		sprintf(fmt,"%s %s ",prefix,option);
+		if (mode == CONF_SET) strcat(fmt,"= ");
+		for (i = 0; i < sizeof(cf) / sizeof(cf[0]); i++) {
+			if ( !strncasecmp(option,cf[i].name,strlen(cf[i].name)) &&
+					cf[i].mode == mode ) {
+				for (j = 0; j < 5; j++) strcat(fmt,fspec[cf[i].type[j]]);
+				sscanf(line,fmt,cf[i].var[0],cf[i].var[1],cf[i].var[2],
+						cf[i].var[3],cf[i].var[4]);
 			}
 		}
 	}
 	if (!conf.hop) conf.hop = conf.winlen / 4;
 	conf.thresh *= -1;
 	conf.spect_floor *= -1;
-
+	if (strlen(window))
+		for (i = 0; i < sizeof(windows)/sizeof(windows[0]); i++)
+			if (!strncasecmp(window,windows[i].type,strlen(window)))
+				conf.win = (WindowFunction *) &windows[i];
+	if (FT_Init_FreeType(&library)) die("unable to init freetype");
+	if ( FT_New_Face(library, font_path, 0, &face) |
+			FT_Set_Pixel_Sizes(face, 0, conf.font_size) ) {
+		fprintf(stderr,"unable to load freetype font: %s\n",font_path);
+		font_path[0] = '\0';
+	}
+	if (!font_path[0] & (FT_New_Face(library, font_default, 0, &face) |
+			FT_Set_Pixel_Sizes(face, 0, conf.font_size) ) ) {
+		die("unable to load default freetype font: %s",font_default);
+	}
+	conf.font = cairo_ft_font_face_create_for_ft_face(face,0);
 	return fname;
+}
+
+int deconfig() {
+	cairo_font_face_destroy(conf.font);
+	FT_Done_Face(face);
 }

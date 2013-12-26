@@ -26,9 +26,10 @@ int create_spectro(FFT *fft, const char *fname) {
 	spect = (Spectro *) calloc(1, sizeof(Spectro));
 	/* names */
 	spect->fname = fname;
-	spect->name = strdup(fname);
-	char *c = strrchr(spect->name,'.');
-	if (c) *c = '\0';
+	char *c = strrchr(spect->fname,'/');
+	if (c && (++c)) spect->name = strdup(c);
+	else spect->name = strdup(fname);
+	if ( (c=strrchr(spect->name,'.')) ) *c = '\0';
 	/* fft */
 	spect->fft = fft;
 	spect->fft_w = fft->ntime;
@@ -90,7 +91,8 @@ int spectro_thresh() {
 	for (j = spect->fft_y; j < spect->fft_h + spect->fft_y; j++) {
 		a = spect->a_thresh + (j - spect->fft_y) * stride;
 		for (i = spect->fft_x; i < spect->fft_w + spect->fft_x; i++, a++) {
-			if (spect->fft->amp[i][j] > conf.thresh) *a = 255;
+			if (spect->fft->mask[i][j]) *a = 0;
+			else if (spect->fft->amp[i][j] > conf.thresh) *a = 255;
 			else *a = 0;
 		}
 	}

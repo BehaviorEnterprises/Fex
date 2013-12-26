@@ -1,8 +1,12 @@
 
 #include "fex.h"
 
-int die(const char *msg) {
-	fprintf(stderr,"ERROR: %s\n",msg);
+int die(const char *msg, ...) {
+	va_list arg;
+	fprintf(stderr,"Fatal Error: ");
+	va_start(arg, msg);
+	vfprintf(stderr,msg,arg);
+	va_end(arg);
 	exit(1);
 }
 
