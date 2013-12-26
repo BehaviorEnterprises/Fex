@@ -332,12 +332,20 @@ XSetForeground(dpy,gc,WhitePixel(dpy,scr));
 	alphas = (unsigned char *) malloc(stride * ffth * 
 			sizeof(unsigned char));
 	unsigned char *a = NULL;
+//unsigned long ta = 0;
 	for (j = 0; j < ffth; j++) {
 		a = alphas + j*stride;
-		for (i = 0; i < w; i++, a++)
+		for (i = 0; i < w; i++, a++) {
 			*a = (unsigned char) 255 * (
 					((fft->amp[i][j+ffty] - sp_floor) >= 0) 
 					? fft->amp[i][j+ffty]/sp_floor : 1);
+if (j == 0) {
+fprintf(stderr,"%d: %lu\n",i,*a);
+}
+//ta += *a;
+		}
+//fprintf(stderr,"%d: %lu\n",j,ta);
+//ta = 0;
 	}
 	mask = cairo_image_surface_create_for_data(alphas,CAIRO_FORMAT_A8,
 			fftw,ffth,stride);

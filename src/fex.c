@@ -281,6 +281,7 @@ int main(int argc, const char **argv) {
 						}
 						lt = fft->time[i]; lf = fft->freq[f];
 						if (interactive) preview_peak(i,f);
+fprintf(stderr,"%d %d\n",i,f);
 					}
 				}
 				if (interactive) previewing = preview_test(ex,tex);
