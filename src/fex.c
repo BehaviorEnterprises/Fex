@@ -20,6 +20,7 @@ int main(int argc, const char **argv) {
 	free_wave(&wav);
 
 	xlib_event_loop();
+	fprintf(stdout,"%.3lf\n", spect->fex);
 
 	free_spectro();
 	free_fft(&fft);

@@ -53,7 +53,7 @@ FFT *create_fft(Wave *wav) {
 		/* calculate fft & fill amp matrix */
 		fftw_execute(p);
 		for (i = 0; i < fft->nfreq; i++)
-			fft->amp[j][i] = sqrt(out[i][0] * out[i][0] + 
+			fft->amp[j][i] = sqrt(out[i][0] * out[i][0] +
 					out[i][1] * out[i][1]);
 	}
 	doublebreak:

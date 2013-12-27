@@ -15,6 +15,7 @@ static void expose(XEvent *);
 static void keypress(XEvent *);
 static void motionnotify(XEvent *);
 
+static int crop(int, int);
 static int erase(int, int);
 static int eraser_cursor(int, int);
 static int move(double, double);
@@ -48,14 +49,8 @@ static void (*handler[LASTEvent])(XEvent *) = {
 #define CtrlMask	ControlMask
 void buttonpress(XEvent *ev) {
 	XButtonEvent *e = &ev->xbutton;
-	if (e->window == info->win) {
-		if (info->button) info->button(info);
-		return;
-	}
-	else if (e->window == help->win) {
-		if (help->button) help->button(help);
-		return;
-	}
+	if (e->window == info->win) info->button(info, e);
+	else if (e->window == help->win) help->button(help, e);
 	else if (e->state == (ControlMask | ShiftMask)) {
 		if (e->button == 4) threshold(0.1);
 		else if (e->button == 5) threshold(-0.1);
@@ -63,8 +58,7 @@ void buttonpress(XEvent *ev) {
 		else if (e->button == 7) sp_floor(0.1);
 	}
 	else if (e->state == ControlMask) {
-		if (e->button == 3) running = False;
-		else if (e->button == 4) zoom(0.025);
+		if (e->button == 4) zoom(0.025);
 		else if (e->button == 5) zoom(-0.025);
 		else if (e->button == 6) return;
 		else if (e->button == 7) return;
@@ -72,8 +66,8 @@ void buttonpress(XEvent *ev) {
 	else if (e->state == Mod1Mask) {
 		if (e->button == 4) eraser_cursor(1,1);
 		else if (e->button == 5) eraser_cursor(-1,-1);
-		else if (e->button == 6) eraser_cursor(1,-1);
-		else if (e->button == 7) eraser_cursor(-1,1);
+		else if (e->button == 6) eraser_cursor(-1,1);
+		else if (e->button == 7) eraser_cursor(1,-1);
 	}
 	else if (e->state == ShiftMask) {
 		if (e->button == 4) pt_line(0.2,0);
@@ -86,7 +80,7 @@ void buttonpress(XEvent *ev) {
 	else if (e->button == 6) move(0.02,0);
 	else if (e->button == 7) move(-0.02,0);
 	else if (mode == MODE_ERASE && e->button == 1) erase(e->x, e->y);
-	else if (mode == MODE_ERASE && e->button == 2) erase(-1,-1);
+	else if (mode == MODE_ERASE && e->button == 3) erase(-1,-1);
 	XSync(dpy,True);
 }
 
@@ -118,14 +112,8 @@ void configurenotify(XEvent *ev) {
 
 void expose(XEvent *ev) {
 	XExposeEvent *e = &ev->xexpose;
-	if (e->window == info->win) {
-		if (info->draw) info->draw(info);
-		else toolwin_draw(info);
-	}
-	else if (e->window == help->win) {
-		if (help->draw) help->draw(help);
-		else toolwin_draw(help);
-	}
+	if (e->window == info->win) info->draw(info);
+	else if (e->window == help->win) help->draw(help);
 	else {
 		XSetWindowBackgroundPixmap(dpy, win, buf);
 		XClearWindow(dpy,win);
@@ -137,7 +125,36 @@ void keypress(XEvent *ev) {
 	XKeyEvent *e = &ev->xkey;
 	KeySym sym = XkbKeycodeToKeysym(dpy, (KeyCode)e->keycode, 0, 0);
 	int mod = ((e->state & ~Mod2Mask) & ~LockMask);
-	if (sym == XK_F1) {
+	if (mod == (ControlMask | ShiftMask)) {
+		if (sym == XK_j) threshold(-0.05);
+		else if (sym == XK_k) threshold(0.05);
+		else if (sym == XK_h) sp_floor(-0.05);
+		else if (sym == XK_l) sp_floor(0.05);
+	}
+	else if (mod == ControlMask) {
+		if (sym == XK_q) running = False;
+		else if (sym == XK_j) zoom(-0.025);
+		else if (sym == XK_k) zoom(0.025);
+		else if (sym == XK_h) return;
+		else if (sym == XK_l) return;
+	}
+	else if (mod == Mod1Mask) {
+		if (sym == XK_j) eraser_cursor(-1,-1);
+		else if (sym == XK_k) eraser_cursor(1,1);
+		else if (sym == XK_h) eraser_cursor(-1,1);
+		else if (sym == XK_l) eraser_cursor(1,-1);
+	}
+	else if (mod == ShiftMask) {
+		if (sym == XK_j) pt_line(-0.2,0);
+		else if (sym == XK_k) pt_line(0.2,0);
+		else if (sym == XK_h) pt_line(0,-0.2);
+		else if (sym == XK_l) pt_line(0,0.2);
+	}
+	else if (sym == XK_j) move(0,0.02);
+	else if (sym == XK_k) move(0,-0.02);
+	else if (sym == XK_h) move(0.02,0);
+	else if (sym == XK_l) move(-0.02,0);
+	else if (sym == XK_F1) {
 		if ( (help->vis = !help->vis) ) XMapRaised(dpy, help->win);
 		else XUnmapWindow(dpy, help->win);
 		XFlush(dpy);
@@ -148,36 +165,35 @@ void keypress(XEvent *ev) {
 		XFlush(dpy);
 	}
 	else if (sym == XK_e) {
-		mode ^= MODE_ERASE;
+		mode = MODE_ERASE & (mode ^= MODE_ERASE);
 		eraser_cursor(0,0);
+		info->draw(info);
+	}
+	else if (sym == XK_c) {
+		mode = MODE_CROP & (mode ^= MODE_CROP);
+		if (!(mode & MODE_CROP)) XDefineCursor(dpy, win, None);
+		else XDefineCursor(dpy, win, XCreateFontCursor(dpy, 34));
+		info->draw(info);
 	}
 	else if (sym == XK_Escape) {
 		mode = MODE_NULL;
-		eraser_cursor(0,0);
+		XDefineCursor(dpy, win, None);
+		info->draw(info);
 	}
-	else if (mod == ControlMask && sym == XK_j) zoom(0.025);
-	else if (mod == ControlMask && sym == XK_k) zoom(-0.025);
-	else if (mod == ControlMask && sym == XK_h) return;
-	else if (mod == ControlMask && sym == XK_l) return;
-	else if (mod == Mod1Mask && sym == XK_j) threshold(-0.1);
-	else if (mod == Mod1Mask && sym == XK_k) threshold(0.1);
-	else if (mod == Mod1Mask && sym == XK_h) sp_floor(-0.1);
-	else if (mod == Mod1Mask && sym == XK_l) sp_floor(0.1);
-	else if (mod == ShiftMask && sym == XK_j) pt_line(-0.2,0);
-	else if (mod == ShiftMask && sym == XK_k) pt_line(0.2,0);
-	else if (mod == ShiftMask && sym == XK_h) pt_line(0,-0.2);
-	else if (mod == ShiftMask && sym == XK_l) pt_line(0,0.2);
-	else if (sym == XK_j) move(0,0.02);
-	else if (sym == XK_k) move(0,-0.02);
-	else if (sym == XK_h) move(0.02,0);
-	else if (sym == XK_l) move(-0.02,0);
+	else if (sym == XK_u && mode & (MODE_ERASE)) erase(-1,-1);
 	XSync(dpy,True);
 }
 
 void motionnotify(XEvent *ev) {
-	mx = spect->fft_w * ev->xmotion.x / (float) ww - 1.0 * xoff;
-	my = spect->fft_h * (1.0 - ev->xmotion.y / (float) wh) - 1.0 * yoff;
-	if (info->vis && info->draw) info->draw(info);
+	mx = spect->fft_w * ev->xmotion.x / (xsc * ww) - 1.0 * xoff +
+			spect->fft_x;
+	my = spect->fft_h * (1.0 - ev->xmotion.y / (ysc * wh)) - 1.0 * yoff +
+			spect->fft_y;
+	info->draw(info);
+}
+
+
+int crop(int x, int y) {
 }
 
 int erase(int x, int y) {
@@ -222,9 +238,11 @@ int erase(int x, int y) {
 		spectro_points();
 		spectro_draw();
 		XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
-		mx = spect->fft_w * e.xmotion.x / (float) ww - 1.0 * xoff;
-		my = spect->fft_h * (1.0 - e.xmotion.y / (float) wh) - 1.0 * yoff;
-		if (info->vis && info->draw) info->draw(info);
+		mx = spect->fft_w * e.xmotion.x / (xsc * ww) - 1.0 * xoff +
+				spect->fft_x;
+		my = spect->fft_h * (1.0 - e.xmotion.y / (ysc * wh)) -1.0 * yoff +
+				spect->fft_y;
+		if (e.type == ButtonRelease) break;
 		XCheckMaskEvent(dpy, ButtonReleaseMask, &e);
 		XSync(dpy,True);
 	}
@@ -239,7 +257,7 @@ int eraser_cursor(int w, int h) {
 	if ( (ew+=w) < 3 ) ew = 3;
 	if ( (eh+=h) < 3 ) eh = 3;
 	if ( ew > ww/4 ) ew = ww / 4;
-	if ( eh > wh/4 ) eh = wh / 4;
+	if ( eh > wh/2 ) eh = wh / 2;
 	int i, j, stride = ew/ 8 + 1;
 	char data[stride * eh];
 	char mask[stride * eh];
@@ -255,6 +273,7 @@ int eraser_cursor(int w, int h) {
 	XDefineCursor(dpy, win, c);
 	XFreePixmap(dpy, cd);
 	XFreePixmap(dpy, cm);
+XSync(dpy,True);
 }
 
 int move(double x, double y) {
@@ -286,7 +305,7 @@ int sp_floor(double f) {
 	spectro_spec();
 	spectro_draw();
 	XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
-	if (info->vis && info->draw) info->draw(info);
+	if (info->vis) info->draw(info);
 }
 
 int threshold(double f) {
@@ -295,7 +314,7 @@ int threshold(double f) {
 	spectro_points();
 	spectro_draw();
 	XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
-	if (info->vis && info->draw) info->draw(info);
+	if (info->vis) info->draw(info);
 }
 
 int zoom(double f) {
@@ -311,9 +330,9 @@ int zoom(double f) {
 }
 
 int create_xlib() {
-//	if (!setlocale(LC_CTYPE,"")) die("unable to set locale");
-//	if (!XSupportsLocale()) die("unsupported locale");
-//	if (!XSetLocaleModifiers("")) die("unable to set locale modifiers");
+	if (!setlocale(LC_CTYPE,"")) die("unable to set locale");
+	if (!XSupportsLocale()) die("unsupported locale");
+	if (!XSetLocaleModifiers("")) die("unable to set locale modifiers");
 	if ( !(dpy=XOpenDisplay(0x0)) ) die("unable to open display");
 	scr = DefaultScreen(dpy);
 	root = DefaultRootWindow(dpy);

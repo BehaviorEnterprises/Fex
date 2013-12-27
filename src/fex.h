@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <locale.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include <X11/XKBlib.h>
@@ -28,6 +29,13 @@
 #define RGBA_ERASE2	0x05
 #define RGBA_CROP		0x06
 #define RGBA_LAST		0x07
+
+
+#define set_color(x,n)	{	\
+	cairo_set_source_rgba(x, conf.col[n].r, conf.col[n].g,	\
+			conf.col[n].b, conf.col[n].a);							\
+	cairo_set_line_width(x, conf.col[n].w);						\
+}
 
 typedef struct Wave {
 	double *d;
@@ -97,5 +105,4 @@ Config conf;
 Spectro *spect;
 
 #endif /* __FEX_H__ */
-
 

@@ -9,10 +9,11 @@ struct ToolWin {
 	Bool vis;
 	int (*backing)(ToolWin *);
 	int (*draw)(ToolWin *);
-	int (*button)(ToolWin *);
+	int (*button)(ToolWin *, XButtonEvent *);
 };
 
 static int toolwin_backing(ToolWin *);
+static int toolwin_button(ToolWin *, XButtonEvent *);
 static int toolwin_create();
 static int toolwin_destroy();
 static int toolwin_draw(ToolWin *);
@@ -28,7 +29,7 @@ static cairo_text_extents_t ext;
 #define A_LEFT		0x00
 #define A_CENTER	0x01
 #define A_RIGHT	0x02
-int toolwin_printf(ToolWin *tw, int align, char *fmt, ...) {
+static int toolwin_printf(ToolWin *tw, int align, char *fmt, ...) {
 	char str[MAX_STRING];
 	va_list arg;
 	va_start(arg, fmt);
@@ -43,7 +44,7 @@ int toolwin_printf(ToolWin *tw, int align, char *fmt, ...) {
 	return 0;
 }
 
-int toolwin_split_printf(ToolWin *tw, char *bold, char *fmt, ...) {
+static int toolwin_split_printf(ToolWin *tw, char *bold, char *fmt, ...) {
 	char str[MAX_STRING];
 	va_list arg;
 	va_start(arg, fmt);
@@ -62,23 +63,67 @@ int toolwin_split_printf(ToolWin *tw, char *bold, char *fmt, ...) {
 	return 0;
 }
 
-int info_draw(ToolWin *tw) {
+static int info_draw(ToolWin *tw) {
 	toolwin_backing(tw);
+	/* info */
 	cairo_set_source_rgba(tw->ctx,0,0,0,1.0);
 	cairo_set_font_face(tw->ctx, conf.bfont);
 	cairo_move_to(tw->ctx, 0, 8);
-	toolwin_printf(tw, A_CENTER, "%.2lf sec, %.2lf KHz",
+	toolwin_printf(tw, A_CENTER, "%.3lf sec, %.2lf KHz",
 			spect->fft->time[mx],spect->fft->freq[my]);
 	cairo_rel_move_to(tw->ctx,0,12);
-	toolwin_split_printf(tw, "Threshold:", "%.3lf", -1.0 * conf.thresh);
-	toolwin_split_printf(tw, "Spectrogram Floor:", "%.3lf", -1.0 * conf.spect_floor);
-	toolwin_split_printf(tw, "Path Length:","%.3lf", spect->pex);
+	toolwin_split_printf(tw, "Threshold:", "%.2lf", -1.0 * conf.thresh);
+	toolwin_split_printf(tw, "Spectrogram Floor:", "%.2lf",
+			-1.0 * conf.spect_floor);
+	toolwin_split_printf(tw, "Path Length:","%.2lf", spect->pex);
 	toolwin_split_printf(tw, "Path Duration:","%.3lf", spect->tex);
 	toolwin_split_printf(tw, "Frequency Excursion:","%.3lf", spect->fex);
-	toolwin_split_printf(tw, "Crop Region:","");
-	// TODO
+	cairo_move_to(tw->ctx, 0, 145);
+	/* modes */
+	toolwin_split_printf(tw, "Modes:","");
+	cairo_set_font_face(tw->ctx, conf.bfont);
+		/* erase */
+	set_color(tw->ctx,RGBA_ERASE1)
+	if (mode & MODE_ERASE) set_color(tw->ctx,RGBA_ERASE1)
+	else cairo_set_source_rgba(tw->ctx,0.8,0.8,0.8,1.0);
+	cairo_rectangle(tw->ctx, 10, 170, tw->w / 2.0 - 15, 20);
+	cairo_fill_preserve(tw->ctx);
+	cairo_set_source_rgba(tw->ctx,0,0,0,1.0);
+	cairo_stroke(tw->ctx);
+	cairo_text_extents(tw->ctx,"Erase",&ext);
+	cairo_move_to(tw->ctx, tw->w / 4.0 - ext.width / 2.0, 185);
+	cairo_set_source_rgba(tw->ctx,0,0,0,1.0);
+	cairo_show_text(tw->ctx,"Erase");
+		/* crop */
+	if (mode & MODE_CROP) set_color(tw->ctx, RGBA_CROP)
+	else cairo_set_source_rgba(tw->ctx,0.8,0.8,0.8,1.0);
+	cairo_rectangle(tw->ctx, 5 + tw->w / 2.0, 170, tw->w / 2.0 - 15, 20);
+	cairo_fill_preserve(tw->ctx);
+	cairo_set_source_rgba(tw->ctx,0.0,0.0,0.0,1.0);
+	cairo_stroke(tw->ctx);
+	cairo_text_extents(tw->ctx,"Crop",&ext);
+	cairo_move_to(tw->ctx, tw->w * 0.75 - ext.width / 2.0, 185);
+	cairo_set_source_rgba(tw->ctx,0,0,0,1.0);
+	cairo_show_text(tw->ctx,"Crop");
+	/* draw */
 	toolwin_draw(tw);
 	return 0;
+}
+
+static int info_button(ToolWin *tw, XButtonEvent *e) {
+	if (e->y < 170 || e->y > 190) return;
+	if (e->x < 10 || e->x > tw->w - 10) return;
+	if (e->x < tw->w / 2.0 - 5) { /* erase button */
+		mode = MODE_ERASE & (mode ^= MODE_ERASE);
+		eraser_cursor(0,0);
+		tw->draw(tw);
+	}
+	else { /* crop button */
+		mode = MODE_CROP & (mode ^= MODE_CROP);
+		if (!(mode & MODE_CROP)) XDefineCursor(dpy, win, None);
+		else XDefineCursor(dpy, win, XCreateFontCursor(dpy, 34));
+		tw->draw(tw);
+	}
 }
 
 int toolwin_backing(ToolWin *tw) {
@@ -88,16 +133,23 @@ int toolwin_backing(ToolWin *tw) {
 	return 0;
 }
 
+int toolwin_button(ToolWin *tw, XButtonEvent *e) {
+	XRaiseWindow(dpy, tw->win);
+}
+
 int toolwin_create() {
 	info = (ToolWin *) calloc(1, sizeof(ToolWin));
 	help = (ToolWin *) calloc(1, sizeof(ToolWin));
-	info->w = 240; info->h = 300;
+	info->w = 240; info->h = 200;
 	info->name = spect->name;
 	info->vis = True;
 	info->draw = info_draw;
+	info->button = info_button;
 	help->w = 320; help->h = 280;
 	help->name = help_name;
 	help->vis = False;
+	help->draw = toolwin_draw;
+	help->button = toolwin_button;
 	toolwin_win_create(info);
 	toolwin_win_create(help);
 	return 0;
