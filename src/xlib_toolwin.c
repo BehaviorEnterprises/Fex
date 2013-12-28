@@ -114,15 +114,34 @@ static int info_button(ToolWin *tw, XButtonEvent *e) {
 	if (e->y < 170 || e->y > 190) return;
 	if (e->x < 10 || e->x > tw->w - 10) return;
 	if (e->x < tw->w / 2.0 - 5) { /* erase button */
-		mode = MODE_ERASE & (mode ^= MODE_ERASE);
-		eraser_cursor(0,0);
-		tw->draw(tw);
+		if (e->button == 1) {
+			mode = MODE_ERASE & (mode ^= MODE_ERASE);
+			eraser_cursor(0,0);
+			tw->draw(tw);
+		}
 	}
 	else { /* crop button */
-		mode = MODE_CROP & (mode ^= MODE_CROP);
-		if (!(mode & MODE_CROP)) XDefineCursor(dpy, win, None);
-		else XDefineCursor(dpy, win, XCreateFontCursor(dpy, 34));
-		tw->draw(tw);
+		if (e->button == 1) {
+			mode = MODE_CROP & (mode ^= MODE_CROP);
+			if (!(mode & MODE_CROP)) XDefineCursor(dpy, win, None);
+			else XDefineCursor(dpy, win, XCreateFontCursor(dpy, 34));
+			tw->draw(tw);
+		}
+		else if (e->button == 3) { /* uncrop */
+			mode |= MODE_CROP;
+			tw->draw(tw);
+			spect->fft_x = 0;
+			spect->fft_y = spect->fft_lo;
+			spect->fft_w = spect->fft->ntime;
+			spect->fft_h = spect->fft_hi - spect->fft_lo;
+			spectro_spec();
+			spectro_thresh();
+			spectro_points();
+			spectro_draw();
+			XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
+			mode &= ~MODE_CROP;
+			tw->draw(tw);
+		}
 	}
 }
 

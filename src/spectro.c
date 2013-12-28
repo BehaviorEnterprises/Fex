@@ -38,9 +38,10 @@ int create_spectro(FFT *fft, const char *fname) {
 	int i;
 	for (i = 0; i < spect->fft->nfreq &&
 			spect->fft->freq[i] < conf.hipass; i++);
-	spect->fft_y = i;
+	spect->fft_lo = spect->fft_y = i;
 	for (i++; i < spect->fft->nfreq &&
 			spect->fft->freq[i] < conf.lopass; i++);
+	spect->fft_hi = i;
 	spect->fft_h = i - spect->fft_y;
 	/* cairo_surfaces */
 	spectro_spec();

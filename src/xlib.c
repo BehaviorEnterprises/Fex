@@ -81,6 +81,7 @@ void buttonpress(XEvent *ev) {
 	else if (e->button == 7) move(-0.02,0);
 	else if (mode == MODE_ERASE && e->button == 1) erase(e->x, e->y);
 	else if (mode == MODE_ERASE && e->button == 3) erase(-1,-1);
+	else if (mode == MODE_CROP && e->button == 1) crop(e->x, e->y);
 	XSync(dpy,True);
 }
 
@@ -185,15 +186,61 @@ void keypress(XEvent *ev) {
 }
 
 void motionnotify(XEvent *ev) {
-	mx = spect->fft_w * ev->xmotion.x / (xsc * ww) - 1.0 * xoff +
-			spect->fft_x;
-	my = spect->fft_h * (1.0 - ev->xmotion.y / (ysc * wh)) - 1.0 * yoff +
-			spect->fft_y;
+	static int px, py;
+	int x = ev->xmotion.x, y = ev->xmotion.y;
+	mx = spect->fft_w * x / (xsc * ww) - 1.0 * xoff + spect->fft_x;
+	my = spect->fft_h * (1.0 - y / (ysc * wh)) - 1.0 * yoff + spect->fft_y;
 	info->draw(info);
+	if (mode == MODE_CROP) {
+		XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
+		XDrawLine(dpy, win, gc, x, 0, x, wh);
+		XDrawLine(dpy, win, gc, 0, y, ww, y);
+	}
 }
 
 
 int crop(int x, int y) {
+	int x1 = x, y1 = y, x2, y2, t;
+	XCopyArea(dpy, win, buf, gc, 0, 0, ww, wh, 0, 0);
+	XEvent e;
+	XGrabPointer(dpy, win, True, PointerMotionMask | ButtonPressMask,
+			GrabModeAsync, GrabModeAsync, None, None, CurrentTime);
+	while (e.type != ButtonPress) {
+		XMaskEvent(dpy, PointerMotionMask | ButtonPressMask |
+				KeyPressMask, &e);
+		if (e.type == KeyPress) break;
+		x2 = e.xmotion.x;
+		y2 = e.xmotion.y;
+		mx = spect->fft_w * x2/(ww*xsc) - 1.0 * xoff + spect->fft_x;
+		my = spect->fft_h * (1.0-y2/(wh*ysc)) - 1.0 * yoff + spect->fft_y;
+		XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
+		XDrawLine(dpy, win, gc, x2, 0, x2, wh);
+		XDrawLine(dpy, win, gc, 0, y2, ww, y2);
+		info_draw(info);
+		if (e.type == ButtonPress) break;
+		XCheckMaskEvent(dpy, ButtonPressMask, &e);
+		XSync(dpy,True);
+	}
+	XUngrabPointer(dpy, CurrentTime);
+	if (x2 < x1) { t = x1; x1 = x2; x2 = t; }
+	if (y2 > y1) { t = y1; y1 = y2; y2 = t; }
+	mode = MODE_NULL;
+	info_draw(info);
+	if (e.type == KeyPress) {
+		spectro_draw();
+		XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
+		return 0;
+	}
+	spect->fft_x = spect->fft_w * x1/(ww*xsc) - 1.0*xoff + spect->fft_x;
+	spect->fft_y = spect->fft_h*(1.0-y1/(wh*ysc))-1.0*yoff+spect->fft_y;
+	spect->fft_w = spect->fft_w * x2/(ww*xsc) - 1.0*xoff - spect->fft_x;
+	spect->fft_h = spect->fft_h*(1.0-y2/(wh*ysc))-1.0*yoff-spect->fft_y;
+	spectro_spec();
+	spectro_thresh();
+	spectro_points();
+	spectro_draw();
+	XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
+	return 0;
 }
 
 int erase(int x, int y) {
@@ -223,25 +270,23 @@ int erase(int x, int y) {
 	while (e.type != ButtonRelease) {
 		XMaskEvent(dpy, PointerMotionMask | ButtonReleaseMask, &e);
 		/* set erase bit mask */
-		x1 = spect->fft_w * e.xbutton.x / (ww * xsc) - 1.0 * xoff;
-		y1 = spect->fft_h * (1.0 - e.xbutton.y / (wh * ysc)) - 1.0 * yoff;
-		x1 -= sew / 2.0; y1 -= seh / 2.0; x2 = x1 + sew; y2 = y1 + seh;
+		mx = spect->fft_w*e.xbutton.x/(ww*xsc) - 1.0*xoff + spect->fft_x;
+		my = spect->fft_h*(1.0-e.xbutton.y/(wh*ysc)) -1.0*yoff+spect->fft_y;
+		x1 = mx - sew / 2.0; y1 = my - seh / 2.0;
+		x2 = mx + sew; y2 = my + seh;
 		if (x1 < 0) x1 = 0;
 		if (y1 < 0) y1 = 0;
 		if (x2 >= spect->fft->ntime) x2 = spect->fft->ntime - 1;
 		if (y2 >= spect->fft->nfreq) y2 = spect->fft->nfreq - 1;
 		for (j = y1; j <= y2; j++)
 			for (i = x1; i <= x2; i++)
-				spect->fft->mask[i+spect->fft_x][j+spect->fft_y] |= 0x01;
+				spect->fft->mask[i][j] |= 0x01;
 		/* redraw */
 		spectro_thresh();
 		spectro_points();
 		spectro_draw();
 		XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
-		mx = spect->fft_w * e.xmotion.x / (xsc * ww) - 1.0 * xoff +
-				spect->fft_x;
-		my = spect->fft_h * (1.0 - e.xmotion.y / (ysc * wh)) -1.0 * yoff +
-				spect->fft_y;
+		info_draw(info);
 		if (e.type == ButtonRelease) break;
 		XCheckMaskEvent(dpy, ButtonReleaseMask, &e);
 		XSync(dpy,True);
@@ -347,7 +392,7 @@ int create_xlib() {
 	XStoreName(dpy, win, "FEX: Frequency Excursion Calculator");
 	WM_DELETE_WINDOW = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
 	XSetWMProtocols(dpy, win, &WM_DELETE_WINDOW, 1);
-	/* set eraser colors */
+	/* set up eraser / crop colors */
 	sprintf(e_col[0],"#%02hhX%02hhX%02hhX",
 		(unsigned char) conf.col[RGBA_ERASE1].r * 255,
 		(unsigned char) conf.col[RGBA_ERASE1].g * 255,
@@ -356,10 +401,18 @@ int create_xlib() {
 		(unsigned char) conf.col[RGBA_ERASE2].r * 255,
 		(unsigned char) conf.col[RGBA_ERASE2].g * 255,
 		(unsigned char) conf.col[RGBA_ERASE2].b * 255);
+	char c_col[8];
+	XColor c;
+	sprintf(c_col,"#%02hhX%02hhX%02hhX",
+		(unsigned char) conf.col[RGBA_CROP].r * 255,
+		(unsigned char) conf.col[RGBA_CROP].g * 255,
+		(unsigned char) conf.col[RGBA_CROP].b * 255);
+	XAllocNamedColor(dpy,DefaultColormap(dpy,scr),c_col,&c,&c);
+	XSetLineAttributes(dpy, gc, conf.col[RGBA_CROP].w, LineSolid,
+			CapButt, JoinRound);
+	XSetForeground(dpy, gc, c.pixel);
 	/* map windows */
 	toolwin_create();
-	XMapWindow(dpy, win);
-	XMapWindow(dpy, info->win);
 	XFlush(dpy);
 	spectro_draw();
 	XSetWindowBackgroundPixmap(dpy, win, buf);
@@ -387,6 +440,8 @@ cairo_t *xlib_context() {
 }
 
 int xlib_event_loop() {
+	XMapWindow(dpy, win);
+	XMapWindow(dpy, info->win);
 	XEvent ev;
 	while (running && !XNextEvent(dpy,&ev))
 		if (ev.type < LASTEvent && handler[ev.type])

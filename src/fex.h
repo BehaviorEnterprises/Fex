@@ -63,7 +63,7 @@ typedef struct Spectro {
 	unsigned char *a_spec, *a_thresh;
 	cairo_surface_t *m_spec, *m_thresh, *s_points;
 	FFT *fft;
-	int fft_x, fft_y, fft_w, fft_h;
+	int fft_x, fft_y, fft_w, fft_h, fft_lo, fft_hi;
 	double pex, tex, fex;
 } Spectro;
 
