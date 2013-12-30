@@ -82,7 +82,7 @@ void buttonpress(XEvent *ev) {
 	else if (mode == MODE_ERASE && e->button == 1) erase(e->x, e->y);
 	else if (mode == MODE_ERASE && e->button == 3) erase(-1,-1);
 	else if (mode == MODE_CROP && e->button == 1) crop(e->x, e->y);
-	XSync(dpy,True);
+	while(XCheckMaskEvent(dpy, ButtonPressMask, ev));
 }
 
 void clientmessage(XEvent *ev) {
@@ -108,6 +108,8 @@ void configurenotify(XEvent *ev) {
 	if (e->window == win) {
 		ww = e->width; wh = e->height;
 		spectro_draw();
+		XSetWindowBackgroundPixmap(dpy, win, buf);
+		XClearWindow(dpy,win);
 	}
 }
 
@@ -118,7 +120,6 @@ void expose(XEvent *ev) {
 	else {
 		XSetWindowBackgroundPixmap(dpy, win, buf);
 		XClearWindow(dpy,win);
-		//XFlush(dpy);
 	}
 }
 
@@ -182,7 +183,7 @@ void keypress(XEvent *ev) {
 		info->draw(info);
 	}
 	else if (sym == XK_u && mode & (MODE_ERASE)) erase(-1,-1);
-	XSync(dpy,True);
+	while(XCheckMaskEvent(dpy, KeyPressMask, ev));
 }
 
 void motionnotify(XEvent *ev) {
@@ -218,8 +219,7 @@ int crop(int x, int y) {
 		XDrawLine(dpy, win, gc, 0, y2, ww, y2);
 		info_draw(info);
 		if (e.type == ButtonPress) break;
-		XCheckMaskEvent(dpy, ButtonPressMask, &e);
-		XSync(dpy,True);
+		while(XCheckMaskEvent(dpy, PointerMotionMask, &e));
 	}
 	XUngrabPointer(dpy, CurrentTime);
 	if (x2 < x1) { t = x1; x1 = x2; x2 = t; }
@@ -288,8 +288,7 @@ int erase(int x, int y) {
 		XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
 		info_draw(info);
 		if (e.type == ButtonRelease) break;
-		XCheckMaskEvent(dpy, ButtonReleaseMask, &e);
-		XSync(dpy,True);
+		while(XCheckMaskEvent(dpy, PointerMotionMask, &e));
 	}
 	XUngrabPointer(dpy, CurrentTime);
 }
@@ -318,7 +317,7 @@ int eraser_cursor(int w, int h) {
 	XDefineCursor(dpy, win, c);
 	XFreePixmap(dpy, cd);
 	XFreePixmap(dpy, cm);
-XSync(dpy,True);
+	XFlush(dpy);
 }
 
 int move(double x, double y) {
@@ -392,6 +391,16 @@ int create_xlib() {
 	XStoreName(dpy, win, "FEX: Frequency Excursion Calculator");
 	WM_DELETE_WINDOW = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
 	XSetWMProtocols(dpy, win, &WM_DELETE_WINDOW, 1);
+#include "icon.xpm"
+Pixmap image, shape;
+XWMHints *hints;
+XpmCreatePixmapFromData(dpy, win, icon, &image, &shape, NULL);
+hints = XAllocWMHints();
+hints->flags = IconPixmapHint | IconMaskHint;
+hints->icon_pixmap = image;
+hints->icon_mask = shape;
+XSetWMHints(dpy, win, hints);
+XFree(hints);
 	/* set up eraser / crop colors */
 	sprintf(e_col[0],"#%02hhX%02hhX%02hhX",
 		(unsigned char) conf.col[RGBA_ERASE1].r * 255,
@@ -411,12 +420,9 @@ int create_xlib() {
 	XSetLineAttributes(dpy, gc, conf.col[RGBA_CROP].w, LineSolid,
 			CapButt, JoinRound);
 	XSetForeground(dpy, gc, c.pixel);
-	/* map windows */
 	toolwin_create();
-	XFlush(dpy);
 	spectro_draw();
 	XSetWindowBackgroundPixmap(dpy, win, buf);
-	XClearWindow(dpy,win);
 	return 0;
 }
 
@@ -427,7 +433,6 @@ int free_xlib() {
 }
 
 cairo_t *xlib_context() {
-	//XFillRectangle(dpy, buf, gc, 0, 0, ww, wh);
 	cairo_surface_t *t = cairo_xlib_surface_create(dpy, buf,
 			DefaultVisual(dpy,scr), ww, wh);
 	cairo_t *c = cairo_create(t);
@@ -442,6 +447,7 @@ cairo_t *xlib_context() {
 int xlib_event_loop() {
 	XMapWindow(dpy, win);
 	XMapWindow(dpy, info->win);
+	XFlush(dpy);
 	XEvent ev;
 	while (running && !XNextEvent(dpy,&ev))
 		if (ev.type < LASTEvent && handler[ev.type])

@@ -3,7 +3,7 @@ PROG     =  fex
 VER      =  2.0a
 CC       ?= gcc
 CFLAGS   += `pkg-config --cflags x11 cairo freetype2 fftw3 sndfile`
-LDFLAGS  += `pkg-config --libs x11 cairo freetype2 fftw3 sndfile` -lm
+LDFLAGS  += `pkg-config --libs x11 cairo freetype2 fftw3 sndfile` -lm -lXpm
 PREFIX   ?= /usr
 MODULES  =  config fex fft spectro wave xlib
 HEADERS  =  fex.h
@@ -29,6 +29,13 @@ config.o: config.c config.h ${HEADERS}
 
 install: ${PROG}
 	@echo not ready yet
+	#intall -Dm755 ${PROG} ${DESTDIR}${PREFIX}/bin/${PROG}
+	#intall -Dm755 src/{PROG}-gtk ${DESTDIR}${PREFIX}/bin/${PROG}-gtk
+	#intall -Dm644 doc/${PROG}.1 ${DESTDIR}${PREFIX}/share/man/man1/${PROG}.1
+	#intall -Dm644 share/${PROG}rc ${DESTDIR}${PREFIX}/share/${PROG}/${PROG}rc
+	#intall -Dm644 share/help.png ${DESTDIR}${PREFIX}/share/${PROG}/help.png
+	#intall -Dm644 share/icon.png ${DESTDIR}${PREFIX}/share/${PROG}/icon.png
+	#intall -Dm644 share/${PROG}.desktop ${DESTDIR}${PREFIX}/share/applications/${PROG}.desktop
 
 ${MANPAGES}: fex.%: fex-%.tex
 	@latex2man $< $@

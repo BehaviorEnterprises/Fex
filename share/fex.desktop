@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=fex
+Comment=Frequency Excursion Calculator
+Exec=fex-gtk %f
+Terminal=false
+Type=Application
+Icon=/usr/share/fex/icon.png
+MimeType=audio/vnd.wav
+Name[en_US]=fex

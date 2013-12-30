@@ -1,5 +1,8 @@
 
-- help window
-- xlib: occasional bug of eraser getting "stuck" as if button is pressed
-- xlib: check fix for window width and height on startup for tiling WMs
+> help window
+- man page
+- finish fex-gtk
+- test fex.desktop
+- screenshot saving
+
 

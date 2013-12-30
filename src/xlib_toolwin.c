@@ -24,12 +24,28 @@ static ToolWin *info, *help;
 static char *help_name = "FEX Help";
 static cairo_text_extents_t ext;
 
-#define MAX_STRING	256
+
+static int help_draw(ToolWin *tw) {
+	toolwin_backing(tw);
+	cairo_set_source_rgba(tw->ctx,0,0,0,1.0);
+	cairo_rectangle(tw->ctx, 10, 10, 460, 300);
+	cairo_stroke_preserve(tw->ctx);
+	cairo_set_source_rgba(tw->ctx,0.8,0.8,0.8,1.0);
+	cairo_fill(tw->ctx);
+	cairo_surface_t *img = cairo_image_surface_create_from_png(
+			"./help.png");
+	cairo_set_source_surface(tw->ctx,img, 8, 8);
+	cairo_paint(tw->ctx);
+	cairo_surface_destroy(img);
+	toolwin_draw(tw);
+}
+
 #define MARGIN		4.0
+#define MAX_STRING	256
 #define A_LEFT		0x00
 #define A_CENTER	0x01
 #define A_RIGHT	0x02
-static int toolwin_printf(ToolWin *tw, int align, char *fmt, ...) {
+static int info_printf(ToolWin *tw, int align, char *fmt, ...) {
 	char str[MAX_STRING];
 	va_list arg;
 	va_start(arg, fmt);
@@ -44,7 +60,7 @@ static int toolwin_printf(ToolWin *tw, int align, char *fmt, ...) {
 	return 0;
 }
 
-static int toolwin_split_printf(ToolWin *tw, char *bold, char *fmt, ...) {
+static int info_split_printf(ToolWin *tw, char *bold, char *fmt, ...) {
 	char str[MAX_STRING];
 	va_list arg;
 	va_start(arg, fmt);
@@ -69,18 +85,18 @@ static int info_draw(ToolWin *tw) {
 	cairo_set_source_rgba(tw->ctx,0,0,0,1.0);
 	cairo_set_font_face(tw->ctx, conf.bfont);
 	cairo_move_to(tw->ctx, 0, 8);
-	toolwin_printf(tw, A_CENTER, "%.3lf sec, %.2lf KHz",
+	info_printf(tw, A_CENTER, "%.3lf sec, %.2lf KHz",
 			spect->fft->time[mx],spect->fft->freq[my]);
 	cairo_rel_move_to(tw->ctx,0,12);
-	toolwin_split_printf(tw, "Threshold:", "%.2lf", -1.0 * conf.thresh);
-	toolwin_split_printf(tw, "Spectrogram Floor:", "%.2lf",
+	info_split_printf(tw, "Threshold:", "%.2lf", -1.0 * conf.thresh);
+	info_split_printf(tw, "Spectrogram Floor:", "%.2lf",
 			-1.0 * conf.spect_floor);
-	toolwin_split_printf(tw, "Path Length:","%.2lf", spect->pex);
-	toolwin_split_printf(tw, "Path Duration:","%.3lf", spect->tex);
-	toolwin_split_printf(tw, "Frequency Excursion:","%.3lf", spect->fex);
+	info_split_printf(tw, "Path Length:","%.2lf", spect->pex);
+	info_split_printf(tw, "Path Duration:","%.3lf", spect->tex);
+	info_split_printf(tw, "Frequency Excursion:","%.3lf", spect->fex);
 	cairo_move_to(tw->ctx, 0, 145);
 	/* modes */
-	toolwin_split_printf(tw, "Modes:","");
+	info_split_printf(tw, "Modes:","");
 	cairo_set_font_face(tw->ctx, conf.bfont);
 		/* erase */
 	set_color(tw->ctx,RGBA_ERASE1)
@@ -164,10 +180,10 @@ int toolwin_create() {
 	info->vis = True;
 	info->draw = info_draw;
 	info->button = info_button;
-	help->w = 320; help->h = 280;
+	help->w = 480; help->h = 320;
 	help->name = help_name;
 	help->vis = False;
-	help->draw = toolwin_draw;
+	help->draw = help_draw;
 	help->button = toolwin_button;
 	toolwin_win_create(info);
 	toolwin_win_create(help);
