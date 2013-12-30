@@ -1,0 +1,70 @@
+#!/usr/bin/env python2
+
+import sys
+import subprocess
+import pygtk
+import gtk
+
+def main(argv):
+	if (len(argv) == 0):
+		filelist = input_files()
+	else:
+		filelist = argv
+	if (len(filelist) == 0):
+		sys.exit(0)
+	data = []
+	for filename in filelist:
+		data.append(subprocess.check_output("fex",filename))
+	if (len(data) == 1):
+		filename = ""
+	else:
+		filename = data_file()
+	if (len(filename) == 0):
+		print "TODO show dialog"
+	else:
+		print "TODO save file"
+
+def input_files():
+	win = gtk.FileChooserDialog(" Open ...", None,
+			gtk.FILE_CHOOSER_ACTION_OPEN,
+			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+			gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+	win.set_default_response(gtk.RESPONSE_OK)
+	win.set_select_multiple(True)
+	# wave filter
+	filter = gtk.FileFilter()
+	filter.set_name("Waves")
+	filter.add_pattern("*.wav")
+	filter.add_pattern("*.WAV")
+	win.add_filter(filter)
+	# alternative filter
+	filter = gtk.FileFilter()
+	filter.set_name("All files")
+	filter.add_pattern("*")
+	win.add_filter(filter)
+	# get files
+	response = win.run()
+	if (response == gtk.RESPONSE_OK):
+		filelist = win.get_filenames()
+	else:
+		filelist = []
+	win.destroy()
+	return filelist
+
+def data_file():
+	win = gtk.FileChooserDialog("Save As ...", None,
+			gtk.FILE_CHOOSER_ACTION_SAVE,
+			(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+			gtk.STOCK_OPEN, gtk.RESPONSE_OK))
+	win.set_default_response(gtk.RESPONSE_OK)
+	win.set_do_overwrite_confirmation(True);
+	response = win.run()
+	if (response == gtk.RESPONSE_OK):
+		filename = win.get_filename()
+	else:
+		filename = ""
+	return filename
+
+if (__name__ == "__main__"):
+	main(sys.argv[1:])
+
