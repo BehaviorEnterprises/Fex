@@ -20,6 +20,7 @@ static int erase(int, int);
 static int eraser_cursor(int, int);
 static int move(double, double);
 static int pt_line(double, double);
+static int screenshot();
 static int sp_floor(double);
 static int threshold(double);
 static int zoom(double);
@@ -135,6 +136,7 @@ void keypress(XEvent *ev) {
 	}
 	else if (mod == ControlMask) {
 		if (sym == XK_q) running = False;
+		if (sym == XK_s) screenshot();
 		else if (sym == XK_j) zoom(-0.025);
 		else if (sym == XK_k) zoom(0.025);
 		else if (sym == XK_h) return;
@@ -342,6 +344,16 @@ int pt_line(double p, double l) {
 	spectro_points();
 	spectro_draw();
 	XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
+}
+
+int screenshot() {
+	char fname[256];
+	static int n = 0;
+	snprintf(fname, 256, "%s-%d.png", spect->name, n++);
+	cairo_surface_t *t = cairo_xlib_surface_create(dpy, buf,
+			DefaultVisual(dpy,scr), ww, wh);
+	cairo_surface_write_to_png(t, fname);
+	cairo_surface_destroy(t);
 }
 
 int sp_floor(double f) {
