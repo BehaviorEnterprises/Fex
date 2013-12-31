@@ -1,3 +1,16 @@
+## FEX Configuration
+##
+##  Copy this file to one of the following locations for editing
+##    $XDG_CONFIG_HOME/fex/config
+##    $HOME/.config/fex/config
+##    $HOME/.fexrc
+
+## Lines starting with a '#' sign are ignored as comments
+##  but this file is not parsed by a shell interpreter.
+
+## Entries should be of one of two forms: 'set' or 'color'
+##   set <parameter> = <values>
+##   color <parameter> = <Red> <Green> <Blue> <Alpha> <Width>
 
 set threshold  = 18.0
 set floor      = 30.0

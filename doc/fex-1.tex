@@ -7,19 +7,72 @@
 \end{Name}
 
 \section{Description}
+
 \Prog{Fex} is a bioacoustic analysis tool for calculating the frequency
 excursion of an audio recording of bird songs or other sound waves.
 
 \section{Fex-gtk}
 
+\Prog{Fex-gtk} is a wrapper script for fex that facilitates batch
+processing of large numbers of wave files.  \Prog{Fex-gtk} can be
+provided a list of file names, or can be run with no parameters to
+provide a dialog window to select input wave files.  \Prog{Fex} will be
+run on each input file, and the results can either be stored to a data
+file or displayed in a dialog window upon completion.
+
+\Prog{Fex-gtk} is also the executable target of \File{fex.desktop} to
+allow for drag-and-drop operation of \Prog{fex}.  The desktop file can
+accept any number of wave files as a drop target.
 
 \section{Configuration}
 \Prog{Fex} is configured via a runtime configuration file read from one
 of
-\File{$XDG_CONFIG_HOME/fex/config},
-\File{$HOME/.config/fex/config},
-\File{$HOME/.fexrc}, or
+\File{\$XDG\_CONFIG\_HOME/fex/config},
+\File{\$HOME/.config/fex/config},
+\File{\$HOME/.fexrc}, or
 \File{/usr/share/fex/config}.
+
+Read the example configuration file at \File{/usr/share/fex/config} for
+a complete description of the available options.  Those listed below are
+only the most likely to be changed.  Settings not listed below should be
+changed only with caution.
+
+\subsection{Settings}
+
+The options below are configured with the following format:
+
+\Opt{set} \Arg{option} = \Arg{value}
+
+\begin{description}
+\item[\Opt{threshold}]
+	Amplitude at which points can be considered part of the signal
+	in dB below the maximum amplitude.
+\item[\Opt{floor}]
+	Sound floor for the spectrogram display
+	in dB below the maximum amplitude.
+\item[\Opt{bandpass}]
+	Hi pass and low pass filter values in kHz.
+\end{description}
+
+
+\subsection{Colors}
+
+Colors are configured with the following format where each setting is a
+floating point value between 0.00 and 1.00:
+
+\Opt{color} \Arg{element} = \Arg{Red} \Arg{Green} \Arg{Blue} \Arg{Alpha}
+\Arg{Width}
+
+\begin{description}
+\item[\Opt{spectrogram}]
+	Background spectrogram
+\item[\Opt{threshold}]
+	Points above the current threshold
+\item[\Opt{points}]
+	Points included in the current frequency excursion calculation
+\item[\Opt{lines}]
+	Lines connecting the peak points
+\end{description}
 
 \section{Author}
 Copyright \copyright 2013-2014 Jesse McClure \\

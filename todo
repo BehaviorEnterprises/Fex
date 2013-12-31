@@ -1,8 +1,8 @@
 
-> help window
-- man page
-> finish fex-gtk
+> help window (WIP)
 - test fex.desktop
-> screenshot saving
+- finish commenting default config
+- config.c: check all paths for rc files
+- Makefile: allow installation
 
 
