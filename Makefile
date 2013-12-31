@@ -13,7 +13,7 @@ VPATH    =  src:doc
 
 ${PROG}: ${MODULES:%=%.o}
 	@echo -e "\033[1;34m  ->\033[0m Linking $@"
-	@cd src && ${CC} -o ../${PROG} ${MODULES:%=%.o} ${LDFLAGS}
+	@cd src && ${CC} -o ../$@ ${MODULES:%=%.o} ${LDFLAGS}
 
 xlib.o: xlib.c xlib_toolwin.c ${HEADERS}
 	@echo -e "\033[1;34m  ->\033[0m Building $@"
@@ -27,7 +27,7 @@ config.o: config.c config.h ${HEADERS}
 	@echo -e "\033[1;34m  ->\033[0m Building $@"
 	@${CC} -c -o src/$@ $< ${CFLAGS} ${DEFS}
 
-install: ${PROG}
+install: ${PROG} ${MANPAGES}
 	@echo not ready yet
 	#intall -Dm755 ${PROG} ${DESTDIR}${PREFIX}/bin/${PROG}
 	#intall -Dm755 src/{PROG}-gtk ${DESTDIR}${PREFIX}/bin/${PROG}-gtk
@@ -38,7 +38,8 @@ install: ${PROG}
 	#intall -Dm644 share/${PROG}.desktop ${DESTDIR}${PREFIX}/share/applications/${PROG}.desktop
 
 ${MANPAGES}: fex.%: fex-%.tex
-	@latex2man $< $@
+	@echo -e "\033[1;34m  ->\033[0m Building $@"
+	@latex2man $< doc/$@
 
 man: ${MANPAGES}
 
