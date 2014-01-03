@@ -1,8 +1,6 @@
 
-> help window (WIP)
+- help window (WIP)
 - test fex.desktop
-- finish commenting default config
-- config.c: check all paths for rc files
 - Makefile: allow installation
 
 

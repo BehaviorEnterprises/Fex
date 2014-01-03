@@ -1,9 +1,9 @@
 [Desktop Entry]
-Name=fex
-Comment=Frequency Excursion Calculator
-Exec=fex-gtk %f
+Name=Fex
+Comment=Calculates the frequency excursion of a sound wave
+Exec=fex-gtk %F
 Terminal=false
 Type=Application
+Categories=Science;
 Icon=/usr/share/fex/icon.png
 MimeType=audio/vnd.wav
-Name[en_US]=fex

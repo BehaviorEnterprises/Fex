@@ -18,13 +18,13 @@ static FT_Library library;
 static FT_Face face, bface;
 static WindowFunction custom;
 static const WindowFunction windows[] = {
-	{ "hanning", 		{0.5,			0.5,			0.0,			0.0}			},
-	{ "hamming",	 	{0.54,		0.46,			0.0,			0.0}	 		},
-	{ "blackman",		{0.42659,	0.49656,		0.076849,	0.0}			},
-	{ "nuttall",		{0.355768,	0.487396,	0.144232,	0.012604}	},
-	{ "blacknut",		{0.3635819,	0.4891775,	0.1365995,	0.0106411}	},
-	{ "blackharris",	{0.35875,	0.48829,		0.14128,		0.01168}		},
-	{ "rectangular",	{1.0,			0.0,			0.0,			0.0}			},
+	{ "hanning",         {0.5,       0.5,       0.0,       0.0}       },
+	{ "hamming",         {0.54,      0.46,      0.0,       0.0}       },
+	{ "blackman",        {0.42659,   0.49656,   0.076849,  0.0}       },
+	{ "nuttall",         {0.355768,  0.487396,  0.144232,  0.012604}  },
+	{ "blackman-nutall", {0.3635819, 0.4891775, 0.1365995, 0.0106411} },
+	{ "blackman-harris", {0.35875,   0.48829,   0.14128,   0.01168}   },
+	{ "rectangular",     {1.0,       0.0,       0.0,       0.0}       },
 };
 
 static inline void version() {
@@ -68,6 +68,8 @@ const char *configure(int argc, const char **argv) {
 		rc = fopen("config","r");
 	else if ( !chdir(getenv("HOME")) )
 		rc = fopen(".fexrc","r");
+	else
+		rc = fopen("/usr/share/fex/config","r");
 	chdir(pwd);
 	if (!rc) die("unable to open configuration file");
 	char line[LINE_LEN], prefix[32], option[32], fmt[LINE_LEN];
