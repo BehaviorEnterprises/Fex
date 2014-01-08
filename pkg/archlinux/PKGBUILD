@@ -9,6 +9,7 @@ arch=('i686' 'x86_64')
 license=('GPL3')
 depends=('cairo' 'desktop-file-utils' 'fftw' 'libxpm' 'libsndfile' 'python2')
 makedepends=('git' 'texlive-core')
+install="${_gitname}.install"
 source=("${_gitname}::git://github.com/TrilbyWhite/fex.git")
 sha256sums=('SKIP')
 
