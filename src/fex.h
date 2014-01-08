@@ -79,6 +79,7 @@ typedef struct Config {
 	WindowFunction *win;
 	RGBA col[RGBA_LAST];
 	cairo_font_face_t *font, *bfont;
+	char help_cmd[256];
 } Config;
 
 /* main.c */

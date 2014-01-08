@@ -48,6 +48,7 @@ static inline void help() {
 const char *configure(int argc, const char **argv) {
 	int i;
 	const char *arg, *fname = NULL, *rcname = NULL;
+	strcpy(conf.help_cmd,"xterm -e man fex-help");
 	for (i = 1; i < argc; i++) {
 		arg = argv[i];
 		if (strncmp(arg,"--h",3) == 0 || strncmp(arg,"-h",2) == 0)

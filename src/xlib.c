@@ -51,7 +51,6 @@ static void (*handler[LASTEvent])(XEvent *) = {
 void buttonpress(XEvent *ev) {
 	XButtonEvent *e = &ev->xbutton;
 	if (e->window == info->win) info->button(info, e);
-	//else if (e->window == help->win) help->button(help, e);
 	else if (e->state == (ControlMask | ShiftMask)) {
 		if (e->button == 4) threshold(0.1);
 		else if (e->button == 5) threshold(-0.1);
@@ -93,10 +92,6 @@ void clientmessage(XEvent *ev) {
 			info->vis = False;
 			XUnmapWindow(dpy, info->win);
 		}
-		//else if (e->window == help->win) {
-		//	help->vis = False;
-		//	XUnmapWindow(dpy, help->win);
-		//}
 		else if (e->window == win) {
 			running = False;
 		}
@@ -117,7 +112,6 @@ void configurenotify(XEvent *ev) {
 void expose(XEvent *ev) {
 	XExposeEvent *e = &ev->xexpose;
 	if (e->window == info->win) info->draw(info);
-	//else if (e->window == help->win) help->draw(help);
 	else {
 		XSetWindowBackgroundPixmap(dpy, win, buf);
 		XClearWindow(dpy,win);
@@ -129,40 +123,41 @@ void keypress(XEvent *ev) {
 	KeySym sym = XkbKeycodeToKeysym(dpy, (KeyCode)e->keycode, 0, 0);
 	int mod = ((e->state & ~Mod2Mask) & ~LockMask);
 	if (mod == (ControlMask | ShiftMask)) {
-		if (sym == XK_j) threshold(-0.05);
-		else if (sym == XK_k) threshold(0.05);
-		else if (sym == XK_h) sp_floor(-0.05);
-		else if (sym == XK_l) sp_floor(0.05);
+		if (sym == XK_j || sym == XK_Up) threshold(-0.05);
+		else if (sym == XK_k || sym == XK_Down) threshold(0.05);
+		else if (sym == XK_h || sym == XK_Left) sp_floor(-0.05);
+		else if (sym == XK_l || sym == XK_Right) sp_floor(0.05);
 	}
 	else if (mod == ControlMask) {
 		if (sym == XK_q) running = False;
 		if (sym == XK_s) screenshot();
-		else if (sym == XK_j) zoom(-0.025);
-		else if (sym == XK_k) zoom(0.025);
-		else if (sym == XK_h) return;
-		else if (sym == XK_l) return;
+		else if (sym == XK_j || sym == XK_Up) zoom(-0.025);
+		else if (sym == XK_k || sym == XK_Down) zoom(0.025);
+		else if (sym == XK_h || sym == XK_Left) return;
+		else if (sym == XK_l || sym == XK_Right) return;
 	}
 	else if (mod == Mod1Mask) {
-		if (sym == XK_j) eraser_cursor(-1,-1);
-		else if (sym == XK_k) eraser_cursor(1,1);
-		else if (sym == XK_h) eraser_cursor(-1,1);
-		else if (sym == XK_l) eraser_cursor(1,-1);
+		if (sym == XK_j || sym == XK_Up) eraser_cursor(-1,-1);
+		else if (sym == XK_k || sym == XK_Down) eraser_cursor(1,1);
+		else if (sym == XK_h || sym == XK_Left) eraser_cursor(-1,1);
+		else if (sym == XK_l || sym == XK_Right) eraser_cursor(1,-1);
 	}
 	else if (mod == ShiftMask) {
-		if (sym == XK_j) pt_line(-0.2,0);
-		else if (sym == XK_k) pt_line(0.2,0);
-		else if (sym == XK_h) pt_line(0,-0.2);
-		else if (sym == XK_l) pt_line(0,0.2);
+		if (sym == XK_j || sym == XK_Up) pt_line(-0.2,0);
+		else if (sym == XK_k || sym == XK_Down) pt_line(0.2,0);
+		else if (sym == XK_h || sym == XK_Left) pt_line(0,-0.2);
+		else if (sym == XK_l || sym == XK_Right) pt_line(0,0.2);
 	}
-	else if (sym == XK_j) move(0,0.02);
-	else if (sym == XK_k) move(0,-0.02);
-	else if (sym == XK_h) move(0.02,0);
-	else if (sym == XK_l) move(-0.02,0);
+	else if (sym == XK_j || sym == XK_Up) move(0,0.02);
+	else if (sym == XK_k || sym == XK_Down) move(0,-0.02);
+	else if (sym == XK_h || sym == XK_Left) move(0.02,0);
+	else if (sym == XK_l || sym == XK_Right) move(-0.02,0);
 	else if (sym == XK_F1) {
-		//if ( (help->vis = !help->vis) ) XMapRaised(dpy, help->win);
-		//else XUnmapWindow(dpy, help->win);
-		//XFlush(dpy);
-		// TODO show help
+		if (fork() == 0) {
+			const char *arg[4];
+			arg[0] = "/bin/sh"; arg[1] = "-c"; arg[2] = conf.help_cmd;
+			arg[3] = NULL; execv(arg[0], (char * const *) arg);
+		}
 	}
 	else if (sym == XK_F2) {
 		if ( (info->vis = !info->vis) ) XMapRaised(dpy,info->win);
