@@ -20,25 +20,26 @@ static int toolwin_draw(ToolWin *);
 static int toolwin_win_create(ToolWin *);
 static int toolwin_win_destroy(ToolWin *);
 
-static ToolWin *info, *help;
-static char *help_name = "FEX Help";
+static ToolWin *info; //, *help;
+//static char *help_name = "FEX Help";
 static cairo_text_extents_t ext;
 
 
-static int help_draw(ToolWin *tw) {
-	toolwin_backing(tw);
-	cairo_set_source_rgba(tw->ctx,0,0,0,1.0);
-	cairo_rectangle(tw->ctx, 10, 10, 460, 300);
-	cairo_stroke_preserve(tw->ctx);
-	cairo_set_source_rgba(tw->ctx,0.8,0.8,0.8,1.0);
-	cairo_fill(tw->ctx);
-	cairo_surface_t *img = cairo_image_surface_create_from_png(
-			"./help.png");
-	cairo_set_source_surface(tw->ctx,img, 8, 8);
-	cairo_paint(tw->ctx);
-	cairo_surface_destroy(img);
-	toolwin_draw(tw);
-}
+//static int help_draw(ToolWin *tw) {
+//	toolwin_backing(tw);
+//	cairo_set_source_rgba(tw->ctx,0,0,0,1.0);
+//	cairo_rectangle(tw->ctx, 10, 10, 460, 300);
+//	cairo_stroke_preserve(tw->ctx);
+//	cairo_set_source_rgba(tw->ctx,0.8,0.8,0.8,1.0);
+//	cairo_fill(tw->ctx);
+////	cairo_surface_t *img = cairo_image_surface_create_from_png(
+////			"./help.png");
+////	cairo_set_source_surface(tw->ctx,img, 8, 8);
+////	cairo_paint(tw->ctx);
+////	cairo_surface_destroy(img);
+//
+//	toolwin_draw(tw);
+//}
 
 #define MARGIN		4.0
 #define MAX_STRING	256
@@ -174,27 +175,27 @@ int toolwin_button(ToolWin *tw, XButtonEvent *e) {
 
 int toolwin_create() {
 	info = (ToolWin *) calloc(1, sizeof(ToolWin));
-	help = (ToolWin *) calloc(1, sizeof(ToolWin));
+	//help = (ToolWin *) calloc(1, sizeof(ToolWin));
 	info->w = 240; info->h = 200;
 	info->name = spect->name;
 	info->vis = True;
 	info->draw = info_draw;
 	info->button = info_button;
-	help->w = 480; help->h = 320;
-	help->name = help_name;
-	help->vis = False;
-	help->draw = help_draw;
-	help->button = toolwin_button;
+	//help->w = 480; help->h = 320;
+	//help->name = help_name;
+	//help->vis = False;
+	//help->draw = help_draw;
+	//help->button = toolwin_button;
 	toolwin_win_create(info);
-	toolwin_win_create(help);
+	//toolwin_win_create(help);
 	return 0;
 }
 
 int toolwin_destroy() {
 	toolwin_win_destroy(info);
-	toolwin_win_destroy(help);
+	//toolwin_win_destroy(help);
 	free(info);
-	free(help);
+	//free(help);
 }
 
 int toolwin_draw(ToolWin *tw) {

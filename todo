@@ -1,5 +1,5 @@
 
-- help window (WIP)
+- add help function to open terminal w/ man page
 - test fex.desktop
 - Makefile: allow installation
 

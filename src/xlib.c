@@ -51,7 +51,7 @@ static void (*handler[LASTEvent])(XEvent *) = {
 void buttonpress(XEvent *ev) {
 	XButtonEvent *e = &ev->xbutton;
 	if (e->window == info->win) info->button(info, e);
-	else if (e->window == help->win) help->button(help, e);
+	//else if (e->window == help->win) help->button(help, e);
 	else if (e->state == (ControlMask | ShiftMask)) {
 		if (e->button == 4) threshold(0.1);
 		else if (e->button == 5) threshold(-0.1);
@@ -93,10 +93,10 @@ void clientmessage(XEvent *ev) {
 			info->vis = False;
 			XUnmapWindow(dpy, info->win);
 		}
-		else if (e->window == help->win) {
-			help->vis = False;
-			XUnmapWindow(dpy, help->win);
-		}
+		//else if (e->window == help->win) {
+		//	help->vis = False;
+		//	XUnmapWindow(dpy, help->win);
+		//}
 		else if (e->window == win) {
 			running = False;
 		}
@@ -117,7 +117,7 @@ void configurenotify(XEvent *ev) {
 void expose(XEvent *ev) {
 	XExposeEvent *e = &ev->xexpose;
 	if (e->window == info->win) info->draw(info);
-	else if (e->window == help->win) help->draw(help);
+	//else if (e->window == help->win) help->draw(help);
 	else {
 		XSetWindowBackgroundPixmap(dpy, win, buf);
 		XClearWindow(dpy,win);
@@ -159,9 +159,10 @@ void keypress(XEvent *ev) {
 	else if (sym == XK_h) move(0.02,0);
 	else if (sym == XK_l) move(-0.02,0);
 	else if (sym == XK_F1) {
-		if ( (help->vis = !help->vis) ) XMapRaised(dpy, help->win);
-		else XUnmapWindow(dpy, help->win);
-		XFlush(dpy);
+		//if ( (help->vis = !help->vis) ) XMapRaised(dpy, help->win);
+		//else XUnmapWindow(dpy, help->win);
+		//XFlush(dpy);
+		// TODO show help
 	}
 	else if (sym == XK_F2) {
 		if ( (info->vis = !info->vis) ) XMapRaised(dpy,info->win);

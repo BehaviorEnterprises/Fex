@@ -7,7 +7,7 @@ LDFLAGS  += `pkg-config --libs x11 cairo freetype2 fftw3 sndfile` -lm -lXpm
 PREFIX   ?= /usr
 MODULES  =  config fex fft spectro wave xlib
 HEADERS  =  fex.h
-MANPAGES =  fex.1
+MANPAGES =  fex.1 fex-help.1
 DEFS		=  -DPROGRAM_NAME=${PROG} -DPROGRAM_VER=${VER}
 VPATH    =  src:doc
 
@@ -29,15 +29,15 @@ config.o: config.c config.h ${HEADERS}
 
 install: ${PROG} ${MANPAGES}
 	@echo not ready yet
-	#intall -Dm755 ${PROG} ${DESTDIR}${PREFIX}/bin/${PROG}
-	#intall -Dm755 src/{PROG}-gtk ${DESTDIR}${PREFIX}/bin/${PROG}-gtk
-	#intall -Dm644 doc/${PROG}.1 ${DESTDIR}${PREFIX}/share/man/man1/${PROG}.1
-	#intall -Dm644 share/${PROG}rc ${DESTDIR}${PREFIX}/share/${PROG}/${PROG}rc
-	#intall -Dm644 share/help.png ${DESTDIR}${PREFIX}/share/${PROG}/help.png
-	#intall -Dm644 share/icon.png ${DESTDIR}${PREFIX}/share/${PROG}/icon.png
-	#intall -Dm644 share/${PROG}.desktop ${DESTDIR}${PREFIX}/share/applications/${PROG}.desktop
+	intall -Dm755 ${PROG} ${DESTDIR}${PREFIX}/bin/${PROG}
+	intall -Dm755 src/{PROG}-gtk ${DESTDIR}${PREFIX}/bin/${PROG}-gtk
+	intall -Dm644 doc/${PROG}.1 ${DESTDIR}${PREFIX}/share/man/man1/${PROG}.1
+	intall -Dm644 doc/${PROG}-help.1 ${DESTDIR}${PREFIX}/share/man/man1/${PROG}-help.1
+	intall -Dm644 share/${PROG}rc ${DESTDIR}${PREFIX}/share/${PROG}/${PROG}rc
+	intall -Dm644 share/icon.png ${DESTDIR}${PREFIX}/share/pixmaps/${PROG}.png
+	intall -Dm644 share/${PROG}.desktop ${DESTDIR}${PREFIX}/share/applications/${PROG}.desktop
 
-${MANPAGES}: fex.%: fex-%.tex
+${MANPAGES}: fex%.1: fex%-1.tex
 	@echo -e "\033[1;34m  ->\033[0m Building $@"
 	@latex2man $< doc/$@
 

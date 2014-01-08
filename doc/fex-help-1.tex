@@ -1,0 +1,75 @@
+\documentclass{latex2man}
+
+\begin{Name}{1}{fex}{Jesse McClure}{Frequency Excusion Controls}{FEX --- The frequency excursion calculator}
+
+\Prog{Fex} can be readily controlled with either the keyboard or a mouse
+with a two-axis scroll wheel.
+
+\end{Name}
+
+\section{Directional Commands}
+
+Direction commands are specified by holding a modifier key and
+indicating the direction with a mouse scroll wheel, the home row
+directional keys (h k j l), or cursor arrow keys.
+
+\begin{Table}{5}
+\\\hline
+\Opt{Modifiers} &
+	\Opt{Up} & \Opt{Down} & \Opt{Left} & \Opt{Right} \\\hline
+\Arg{None} &
+	scroll & scroll & scroll & scroll \\
+&
+	up & down & left & right \\
+\\
+\Arg{Control} &
+	zoom & zoom & - & - \\
+&
+	in & out & & & \\
+\\
+\Arg{Alt} &
+	bigger & smaller & narrow & wider \\
+&
+	eraser & eraser & eraser & eraser \\
+\\
+\Arg{Shift} &
+	bigger & smaller & narrower & wider \\
+&
+	points & points & lines & lines \\
+\\
+\Arg{Control+Shift} &
+	fewer & more & darker & lighter \\
+&
+	points & points & spectrogram & spectrogram \\\hline
+\end{Table}
+
+\section{Other Controls}
+
+\begin{description}
+\item[\Opt{Control+q}] Quit
+\item[\Opt{F1}] Show this help page
+\item[\Opt{F2}] Toggle visibility of the tool window
+\item[\Opt{c}] Toggle crop mode
+\item[\Opt{e}] Toggle eraser mode
+\item[\Opt{Esc}] Return to normal mode
+\item[\Opt{u}] Undo last erase, in erase mode only, up to 7 undo levels
+\end{description}
+
+\section{Tool Window}
+
+The tool window displays the current cursor position and the currently
+calculated frequency excursion.  The tool window also allows for
+point-and-click access to the available modes.
+
+\begin{description}
+\item[\Opt{Erase}] Toggle erase mode
+\item[\Opt{Crop}] \Arg{Left-click}: Toggle crop mode \Arg{Right-click}:
+Undo all cropping
+\end{description}
+
+
+\section{See Also}
+
+\Opt{fex}(1)
+
+\LatexManEnd
