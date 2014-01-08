@@ -1,3 +1,24 @@
+/**********************************************************************\
+* FEX - The Frequency Excursion Calculator
+*
+* Author: Jesse McClure, copyright 2012-2014
+* License: GPL3
+*
+*    This program is free software: you can redistribute it and/or
+*    modify it under the terms of the GNU General Public License as
+*    published by the Free Software Foundation, either version 3 of the
+*    License, or (at your option) any later version.
+*
+*    This program is distributed in the hope that it will be useful, but
+*    WITHOUT ANY WARRANTY; without even the implied warranty of
+*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+*    General Public License for more details.
+*
+*    You should have received a copy of the GNU General Public License
+*    along with this program.  If not, see
+*    <http://www.gnu.org/licenses/>.
+*
+\**********************************************************************/
 
 #ifndef __FEX_H__
 #define __FEX_H__
@@ -79,7 +100,7 @@ typedef struct Config {
 	WindowFunction *win;
 	RGBA col[RGBA_LAST];
 	cairo_font_face_t *font, *bfont;
-	char help_cmd[256];
+	char **help_cmd;
 } Config;
 
 /* main.c */

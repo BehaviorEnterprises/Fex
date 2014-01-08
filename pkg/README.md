@@ -8,7 +8,7 @@ more familiar with other distros.
 
 ####Dependencies
 
-The following packages, all their dependencies are required.
+The following packages and all their dependencies are required.
 
 + cairo
 + desktop-file-utils

@@ -1,3 +1,24 @@
+/**********************************************************************\
+* FEX - The Frequency Excursion Calculator
+*
+* Author: Jesse McClure, copyright 2012-2014
+* License: GPL3
+*
+*    This program is free software: you can redistribute it and/or
+*    modify it under the terms of the GNU General Public License as
+*    published by the Free Software Foundation, either version 3 of the
+*    License, or (at your option) any later version.
+*
+*    This program is distributed in the hope that it will be useful, but
+*    WITHOUT ANY WARRANTY; without even the implied warranty of
+*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+*    General Public License for more details.
+*
+*    You should have received a copy of the GNU General Public License
+*    along with this program.  If not, see
+*    <http://www.gnu.org/licenses/>.
+*
+\**********************************************************************/
 
 #include "fex.h"
 
@@ -48,7 +69,8 @@ static inline void help() {
 const char *configure(int argc, const char **argv) {
 	int i;
 	const char *arg, *fname = NULL, *rcname = NULL;
-	strcpy(conf.help_cmd,"xterm -e man fex-help");
+	char help_cmd[256] = "xterm -e man man";
+	conf.help_cmd = NULL;
 	for (i = 1; i < argc; i++) {
 		arg = argv[i];
 		if (strncmp(arg,"--h",3) == 0 || strncmp(arg,"-h",2) == 0)
@@ -75,7 +97,7 @@ const char *configure(int argc, const char **argv) {
 	if (!rc) die("unable to open configuration file");
 	char line[LINE_LEN], prefix[32], option[32], fmt[LINE_LEN];
 	char window[32], font_path1[LINE_LEN], font_path2[LINE_LEN];
-	const char *fspec[] = { "", "%d ","%f ", "%lf ", "%s" };
+	const char *fspec[] = { "", "%d ","%f ", "%lf ", "%[^\n]" };
 	int j, mode;
 	conf.thresh = 14.0;
 	conf.spect_floor = 40.0;
@@ -125,10 +147,21 @@ const char *configure(int argc, const char **argv) {
 		fprintf(stderr,"unable to load freetype font: %s\n",font_path2);
 	conf.font = cairo_ft_font_face_create_for_ft_face(face,0);
 	conf.bfont = cairo_ft_font_face_create_for_ft_face(bface,0);
+
+	char *help_arg = strtok(help_cmd," ");
+	for (i = 0; help_arg; i++) {
+		conf.help_cmd = realloc(conf.help_cmd, (i+2) * sizeof(char *));
+		conf.help_cmd[i] = strdup(help_arg);
+		conf.help_cmd[i+1] = NULL;
+		help_arg = strtok(NULL," ");
+	}
 	return fname;
 }
 
 int deconfig() {
+	int i;
+	for (i = 0; conf.help_cmd[i]; i++) free(conf.help_cmd[i]);
+	free(conf.help_cmd);
 	cairo_font_face_destroy(conf.font);
 	cairo_font_face_destroy(conf.bfont);
 	FT_Done_Face(face);

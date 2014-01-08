@@ -1,3 +1,24 @@
+/**********************************************************************\
+* FEX - The Frequency Excursion Calculator
+*
+* Author: Jesse McClure, copyright 2012-2014
+* License: GPL3
+*
+*    This program is free software: you can redistribute it and/or
+*    modify it under the terms of the GNU General Public License as
+*    published by the Free Software Foundation, either version 3 of the
+*    License, or (at your option) any later version.
+*
+*    This program is distributed in the hope that it will be useful, but
+*    WITHOUT ANY WARRANTY; without even the implied warranty of
+*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+*    General Public License for more details.
+*
+*    You should have received a copy of the GNU General Public License
+*    along with this program.  If not, see
+*    <http://www.gnu.org/licenses/>.
+*
+\**********************************************************************/
 
 #include "fex.h"
 
@@ -153,11 +174,8 @@ void keypress(XEvent *ev) {
 	else if (sym == XK_h || sym == XK_Left) move(0.02,0);
 	else if (sym == XK_l || sym == XK_Right) move(-0.02,0);
 	else if (sym == XK_F1) {
-		if (fork() == 0) {
-			const char *arg[4];
-			arg[0] = "/bin/sh"; arg[1] = "-c"; arg[2] = conf.help_cmd;
-			arg[3] = NULL; execv(arg[0], (char * const *) arg);
-		}
+		if (fork() == 0)
+			execvp(conf.help_cmd[0],(char * const *)conf.help_cmd);
 	}
 	else if (sym == XK_F2) {
 		if ( (info->vis = !info->vis) ) XMapRaised(dpy,info->win);

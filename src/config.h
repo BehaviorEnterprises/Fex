@@ -32,7 +32,7 @@
 	{ &conf.font_size, NULL, NULL, NULL, NULL}, },
 { "help", CONF_SET,
 	{ C_TYPE_S, C_TYPE__, C_TYPE__, C_TYPE__, C_TYPE__ },
-	{ &conf.help_cmd, NULL, NULL, NULL, NULL}, },
+	{ &help_cmd, NULL, NULL, NULL, NULL}, },
 
 /* color */
 { "spectrogram", CONF_COL,
