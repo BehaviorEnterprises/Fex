@@ -289,13 +289,13 @@ int erase(int x, int y) {
 		mx = spect->fft_w*e.xbutton.x/(ww*xsc) - 1.0*xoff + spect->fft_x;
 		my = spect->fft_h*(1.0-e.xbutton.y/(wh*ysc)) -1.0*yoff+spect->fft_y;
 		x1 = mx - sew / 2.0; y1 = my - seh / 2.0;
-		x2 = mx + sew; y2 = my + seh;
+		x2 = x1 + sew; y2 = y1 + seh;
 		if (x1 < 0) x1 = 0;
 		if (y1 < 0) y1 = 0;
 		if (x2 >= spect->fft->ntime) x2 = spect->fft->ntime - 1;
 		if (y2 >= spect->fft->nfreq) y2 = spect->fft->nfreq - 1;
-		for (j = y1; j < y2; j++)
-			for (i = x1; i < x2; i++)
+		for (j = y1; j <= y2; j++)
+			for (i = x1; i <= x2; i++)
 				spect->fft->mask[i][j] |= 0x01;
 		/* redraw */
 		spectro_thresh();
