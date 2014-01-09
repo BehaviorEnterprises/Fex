@@ -33,7 +33,7 @@ set window     = hanning
 set fontName   = /usr/share/fonts/TTF/DroidSans.ttf
 set fontBold   = /usr/share/fonts/TTF/DroidSans-Bold.ttf
 set fontSize	= 14
-set help       = urxvt -c man fex-help
+set help       = urxvt -e man fex-help
 
 ## Colors
 ##   spectrogram: background spectrogram
