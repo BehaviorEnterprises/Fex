@@ -144,33 +144,33 @@ void keypress(XEvent *ev) {
 	KeySym sym = XkbKeycodeToKeysym(dpy, (KeyCode)e->keycode, 0, 0);
 	int mod = ((e->state & ~Mod2Mask) & ~LockMask);
 	if (mod == (ControlMask | ShiftMask)) {
-		if (sym == XK_j || sym == XK_Up) threshold(-0.05);
-		else if (sym == XK_k || sym == XK_Down) threshold(0.05);
+		if (sym == XK_j || sym == XK_Down) threshold(-0.05);
+		else if (sym == XK_k || sym == XK_Up) threshold(0.05);
 		else if (sym == XK_h || sym == XK_Left) sp_floor(-0.05);
 		else if (sym == XK_l || sym == XK_Right) sp_floor(0.05);
 	}
 	else if (mod == ControlMask) {
 		if (sym == XK_q) running = False;
 		if (sym == XK_s) screenshot();
-		else if (sym == XK_j || sym == XK_Up) zoom(-0.025);
-		else if (sym == XK_k || sym == XK_Down) zoom(0.025);
+		else if (sym == XK_j || sym == XK_Down) zoom(-0.025);
+		else if (sym == XK_k || sym == XK_Up) zoom(0.025);
 		else if (sym == XK_h || sym == XK_Left) return;
 		else if (sym == XK_l || sym == XK_Right) return;
 	}
 	else if (mod == Mod1Mask) {
-		if (sym == XK_j || sym == XK_Up) eraser_cursor(-1,-1);
-		else if (sym == XK_k || sym == XK_Down) eraser_cursor(1,1);
+		if (sym == XK_j || sym == XK_Down) eraser_cursor(-1,-1);
+		else if (sym == XK_k || sym == XK_Up) eraser_cursor(1,1);
 		else if (sym == XK_h || sym == XK_Left) eraser_cursor(-1,1);
 		else if (sym == XK_l || sym == XK_Right) eraser_cursor(1,-1);
 	}
 	else if (mod == ShiftMask) {
-		if (sym == XK_j || sym == XK_Up) pt_line(-0.2,0);
-		else if (sym == XK_k || sym == XK_Down) pt_line(0.2,0);
+		if (sym == XK_j || sym == XK_Down) pt_line(-0.2,0);
+		else if (sym == XK_k || sym == XK_Up) pt_line(0.2,0);
 		else if (sym == XK_h || sym == XK_Left) pt_line(0,-0.2);
 		else if (sym == XK_l || sym == XK_Right) pt_line(0,0.2);
 	}
-	else if (sym == XK_j || sym == XK_Up) move(0,0.02);
-	else if (sym == XK_k || sym == XK_Down) move(0,-0.02);
+	else if (sym == XK_j || sym == XK_Down) move(0,0.02);
+	else if (sym == XK_k || sym == XK_Up) move(0,-0.02);
 	else if (sym == XK_h || sym == XK_Left) move(0.02,0);
 	else if (sym == XK_l || sym == XK_Right) move(-0.02,0);
 	else if (sym == XK_F1) {
@@ -294,8 +294,8 @@ int erase(int x, int y) {
 		if (y1 < 0) y1 = 0;
 		if (x2 >= spect->fft->ntime) x2 = spect->fft->ntime - 1;
 		if (y2 >= spect->fft->nfreq) y2 = spect->fft->nfreq - 1;
-		for (j = y1; j <= y2; j++)
-			for (i = x1; i <= x2; i++)
+		for (j = y1; j < y2; j++)
+			for (i = x1; i < x2; i++)
 				spect->fft->mask[i][j] |= 0x01;
 		/* redraw */
 		spectro_thresh();
