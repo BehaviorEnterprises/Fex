@@ -289,7 +289,7 @@ int erase(int x, int y) {
 		mx = spect->fft_w*e.xbutton.x/(ww*xsc) - 1.0*xoff + spect->fft_x;
 		my = spect->fft_h*(1.0-e.xbutton.y/(wh*ysc)) -1.0*yoff+spect->fft_y;
 		x1 = mx - sew / 2.0; y1 = my - seh / 2.0;
-		x2 = x1 + sew; y2 = y1 + seh;
+		x2 = mx + sew / 2.0; y2 = my + seh / 2.0;
 		if (x1 < 0) x1 = 0;
 		if (y1 < 0) y1 = 0;
 		if (x2 >= spect->fft->ntime) x2 = spect->fft->ntime - 1;
