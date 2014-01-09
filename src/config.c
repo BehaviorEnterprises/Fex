@@ -91,11 +91,9 @@ const char *configure(int argc, const char **argv) {
 	else if ( (!chdir(getenv("XDG_CONFIG_HOME")) && !chdir("fex")) ||
 			(!chdir(getenv("HOME")) && !chdir(".config/fex")) )
 		rc = fopen("config","r");
-	else if ( !chdir(getenv("HOME")) )
-		rc = fopen(".fexrc","r");
-	else
-		rc = fopen("/usr/share/fex/config","r");
+	if (!rc && !chdir(getenv("HOME"))) rc = fopen(".fexrc","r");
 	chdir(pwd);
+	if (!rc) rc = fopen("/usr/share/fex/config","r");
 	if (!rc) die("unable to open configuration file");
 	char line[LINE_LEN], prefix[32], option[32], fmt[LINE_LEN];
 	char window[32], font_path1[LINE_LEN], font_path2[LINE_LEN];
