@@ -1,6 +1,6 @@
 
 PROG     =  fex
-VER      =  2.0b
+VER      =  2.0rc
 CC       ?= gcc
 CFLAGS   += `pkg-config --cflags x11 cairo freetype2 fftw3 sndfile`
 LDFLAGS  += `pkg-config --libs x11 cairo freetype2 fftw3 sndfile` -lm -lXpm

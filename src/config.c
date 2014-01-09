@@ -1,7 +1,7 @@
 /**********************************************************************\
 * FEX - The Frequency Excursion Calculator
 *
-* Author: Jesse McClure, copyright 2012-2014
+* Author: Jesse McClure, copyright 2013-2014
 * License: GPL3
 *
 *    This program is free software: you can redistribute it and/or
@@ -50,7 +50,7 @@ static const WindowFunction windows[] = {
 
 static inline void version() {
 	printf(STRING(PROGRAM_NAME) " v" STRING(PROGRAM_VER)
-", Copyright © 2013 Jesse McClure <www.mccluresk9.com>\n"
+", Copyright © 2013-2014 Jesse McClure <www.mccluresk9.com>\n"
 "You should have received a copy of the GNU General Public License\n"
 "along with this program.  If not, see <http://www.gnu.org/licenses/>.\n");
 	 exit(0);
@@ -60,8 +60,10 @@ static inline void help() {
 	printf("\n"
 		"USAGE\n  " STRING(PROGRAM_NAME) " <options> <wavefile>\n\n"
 		"OPTIONS\n"
-		"  -v                show version information then exit\n"
-		"  -h                show help information then exit\n"
+		"  -v|--version             show version information then exit\n"
+		"  -h|--help                show help information then exit\n\n"
+		"SEE ALSO\n"
+		"  fex(1) and fex-help(1)\n"
 		"\n" );
 	exit(0);
 }
