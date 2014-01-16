@@ -40,6 +40,7 @@ static int crop(int, int);
 static int erase(int, int);
 static int eraser_cursor(int, int);
 static int move(double, double);
+static int play();
 static int pt_line(double, double);
 static int screenshot();
 static int sp_floor(double);
@@ -198,6 +199,7 @@ void keypress(XEvent *ev) {
 		XDefineCursor(dpy, win, None);
 		info->draw(info);
 	}
+	else if (sym == XK_p) play();
 	else if (sym == XK_u && mode & (MODE_ERASE)) erase(-1,-1);
 	while(XCheckMaskEvent(dpy, KeyPressMask, ev));
 }
@@ -347,6 +349,25 @@ int move(double x, double y) {
 	if (x || y) { /* don't redraw for offset checks */
 		spectro_draw();
 		XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
+	}
+}
+
+int play() {
+	if (!fork()==0) {
+		close(ConnectionNumber(dpy));
+		char start[12], end[12], mid[12], wid[12];
+		double _start = spect->fft->time[spect->fft_x];
+		double _end = spect->fft->time[spect->fft_x+spect->fft_w-1];
+		double _low = spect->fft->freq[spect->fft_y];
+		double _hi = spect->fft->freq[spect->fft_y+spect->fft_h-1];
+		double _mid = (_hi+_low)/2.0;
+		double _wid = (_hi-_low)/2.0;
+		sprintf(start,"=%lf",_start); sprintf(end,"=%lf",_end);
+		sprintf(mid,"%lfk",_mid); sprintf(wid,"%lfk",_wid);
+		execl("/usr/bin/play", "play", "-q", spect->fname,
+				"trim", start, end, "bandpass", mid, wid, NULL);
+		perror("Fex Play");
+		exit(1);
 	}
 }
 
