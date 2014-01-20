@@ -249,10 +249,11 @@ int crop(int x, int y) {
 		XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
 		return 0;
 	}
+	float oldy = spect->fft_y;
 	spect->fft_x = spect->fft_w * x1/(ww*xsc) - 1.0*xoff + spect->fft_x;
 	spect->fft_y = spect->fft_h*(1.0-y1/(wh*ysc))-1.0*yoff+spect->fft_y;
 	spect->fft_w = spect->fft_w * x2/(ww*xsc) - 1.0*xoff - spect->fft_x;
-	spect->fft_h = spect->fft_h*(1.0-y2/(wh*ysc))-1.0*yoff-spect->fft_y;
+	spect->fft_h = spect->fft_h*(1.0-y2/(wh*ysc))-1.0*yoff - oldy;
 	spectro_spec();
 	spectro_thresh();
 	spectro_points();
