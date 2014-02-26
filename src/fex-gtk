@@ -37,7 +37,11 @@ def main(argv):
 	data = "Song\tFEX\n"
 	for filename in filelist:
 		song = os.path.splitext(os.path.basename(filename))[0]
-		data = data + song + "\t" + subprocess.check_output(["fex",filename])
+		try:
+			FE = subprocess.check_output(["fex",filename])
+		except subprocess.CalledProcessError as err:
+			FE = "NA\n"
+		data = data + song + "\t" + FE
 	if (len(filelist) == 1):
 		filename = ""
 	else:
