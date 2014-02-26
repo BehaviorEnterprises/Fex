@@ -79,6 +79,8 @@ def input_files():
 	else:
 		filelist = []
 	win.destroy()
+	while gtk.events_pending():
+	   gtk.main_iteration(False)
 	return filelist
 
 def data_file():
