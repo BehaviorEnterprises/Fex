@@ -41,7 +41,10 @@ int main(int argc, const char **argv) {
 	free_wave(&wav);
 
 	xlib_event_loop();
-	fprintf(stdout,"%.3lf\n", spect->fex);
+	if (spect->fex > 0)
+		fprintf(stdout,"%.3lf\n", spect->fex);
+	else
+		fprintf(stdout,"NA\n");
 
 	free_spectro();
 	free_fft(&fft);

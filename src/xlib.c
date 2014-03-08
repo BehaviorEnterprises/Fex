@@ -145,6 +145,10 @@ void keypress(XEvent *ev) {
 	KeySym sym = XkbKeycodeToKeysym(dpy, (KeyCode)e->keycode, 0, 0);
 	int mod = ((e->state & ~Mod2Mask) & ~LockMask);
 	if (mod == (ControlMask | ShiftMask)) {
+		if (sym == XK_q) {
+spect->fex = 0;
+			running = False;
+		}
 		if (sym == XK_j || sym == XK_Down) threshold(-0.05);
 		else if (sym == XK_k || sym == XK_Up) threshold(0.05);
 		else if (sym == XK_h || sym == XK_Left) sp_floor(-0.05);
@@ -230,6 +234,8 @@ int crop(int x, int y) {
 		if (e.type == KeyPress) break;
 		x2 = e.xmotion.x;
 		y2 = e.xmotion.y;
+		if (x2 > ww) x2 = ww;
+		if (y2 > wh) y2 = wh;
 		mx = spect->fft_w * x2/(ww*xsc) - 1.0 * xoff + spect->fft_x;
 		my = spect->fft_h * (1.0-y2/(wh*ysc)) - 1.0 * yoff + spect->fft_y;
 		XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
