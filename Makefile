@@ -5,7 +5,7 @@ CC       ?= gcc
 DEPS     =  x11 cairo freetype2 fftw3 sndfile
 DEFS		=  -DPROGRAM_NAME=${PROG} -DPROGRAM_VER=${VER}
 CFLAGS   += $(shell pkg-config --cflags ${DEPS}) ${DEFS}
-LDLIBS   += $(shell pkg-config --cflags ${DEPS}) -lm -lXpm
+LDLIBS   += $(shell pkg-config --libs ${DEPS}) -lm -lXpm
 PREFIX   ?= /usr
 MODULES  =  config fex fft spectro wave xlib
 HEADERS  =  fex.h
