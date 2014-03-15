@@ -39,7 +39,10 @@ def main(argv):
 		filelist = argv
 	if (len(filelist) == 0):
 		sys.exit(0)
-	data = "Song\tFEX\n"
+	if (opt_long):
+		data = "Song\tPath\tTime\tFEX\n"
+	else:
+		data = "Song\tFEX\n"
 	for filename in filelist:
 		song = os.path.splitext(os.path.basename(filename))[0]
 		try:
