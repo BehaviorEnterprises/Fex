@@ -28,7 +28,7 @@ import pygtk
 import gtk
 
 def main(argv):
-	if (argv[0] == "--long"):
+	if (len(argv) > 0) and (argv[0] == "--long"):
 		opt_long = True
 		del argv[0]
 	else:
