@@ -12,20 +12,24 @@ DEFS		=  -DPROGRAM_NAME=${PROG} -DPROGRAM_VER=${VER}
 VPATH    =  src:doc
 
 ${PROG}: ${MODULES:%=%.o}
-	@echo -e "\033[1;34m  ->\033[0m Linking $@"
-	@cd src && ${CC} -o ../$@ ${MODULES:%=%.o} ${LDFLAGS}
+
+#	@echo -e "\033[1;34m  ->\033[0m Linking $@"
+#	@cd src && ${CC} -o ../$@ ${MODULES:%=%.o} ${LDFLAGS}
 
 xlib.o: xlib.c xlib_toolwin.c ${HEADERS}
-	@echo -e "\033[1;34m  ->\033[0m Building $@"
-	@${CC} -c -o src/$@ $< ${CFLAGS} ${DEFS}
+
+#	@echo -e "\033[1;34m  ->\033[0m Building $@"
+#	@${CC} -c -o src/$@ $< ${CFLAGS} ${DEFS}
 
 config.o: config.c config.h ${HEADERS}
-	@echo -e "\033[1;34m  ->\033[0m Building $@"
-	@${CC} -c -o src/$@ $< ${CFLAGS} ${DEFS}
+
+#	@echo -e "\033[1;34m  ->\033[0m Building $@"
+#	@${CC} -c -o src/$@ $< ${CFLAGS} ${DEFS}
 
 %.o: %.c ${HEADERS}
-	@echo -e "\033[1;34m  ->\033[0m Building $@"
-	@${CC} -c -o src/$@ $< ${CFLAGS} ${DEFS}
+
+#	@echo -e "\033[1;34m  ->\033[0m Building $@"
+#	@${CC} -c -o src/$@ $< ${CFLAGS} ${DEFS}
 
 install: ${PROG} ${MANPAGES}
 	@install -Dm755 ${PROG} ${DESTDIR}${PREFIX}/bin/${PROG}
@@ -43,11 +47,12 @@ ${MANPAGES}: fex%.1: fex%-1.tex
 man: ${MANPAGES}
 
 clean:
-	@rm -f ${PROG} ${PROG}-${VER}.tar.gz
-	@cd src && rm -f ${MODULES:%=%.o}
-	@cd doc && rm -f ${MANPAGES}
+	@rm -f ${MODULES:%=%.o}
 
-dist: clean
+distclean: clean
+	@rm -f ${PROG} ${PROG}-${VER}.tar.gz
+
+dist: distclean
 	@tar -czf ${PROG}-${VER}.tar.gz *
 
-.PHONY: clean dist man
+.PHONY: clean dist distclean man

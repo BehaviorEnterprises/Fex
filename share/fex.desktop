@@ -2,6 +2,7 @@
 Name=Fex
 Comment=Calculates the frequency excursion of a sound wave
 Exec=fex-gtk %F
+#Exec=fex-gtk --long %F
 Terminal=false
 Type=Application
 Categories=Science;

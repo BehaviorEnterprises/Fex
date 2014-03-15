@@ -41,8 +41,13 @@ int main(int argc, const char **argv) {
 	free_wave(&wav);
 
 	xlib_event_loop();
-	if (spect->fex > 0)
+	if (spect->fex > 0 && conf.long_out)
+		fprintf(stdout,"%.3lf\t%.3lf\t%.3lf\n",
+				spect->pex, spect->tex, spect->fex);
+	else if (spect->fex > 0)
 		fprintf(stdout,"%.3lf\n", spect->fex);
+	else if (conf.long_out)
+		fprintf(stdout,"NA\tNA\tNA\n");
 	else
 		fprintf(stdout,"NA\n");
 

@@ -24,6 +24,9 @@
 ##   fontName, fontBold: full paths to font
 ##   fontSize: font size in pixels
 ##   help: command for launching the help page
+##   output: any combination of the following:
+##     path: print path length
+##     time: print path duration
 set threshold  = 18.0
 set floor      = 30.0
 set samples    = 256

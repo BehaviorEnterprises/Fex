@@ -146,7 +146,7 @@ void keypress(XEvent *ev) {
 	int mod = ((e->state & ~Mod2Mask) & ~LockMask);
 	if (mod == (ControlMask | ShiftMask)) {
 		if (sym == XK_q) {
-spect->fex = 0;
+			spect->fex = 0;
 			running = False;
 		}
 		if (sym == XK_j || sym == XK_Down) threshold(-0.05);

@@ -73,12 +73,15 @@ const char *configure(int argc, const char **argv) {
 	const char *arg, *fname = NULL, *rcname = NULL;
 	char help_cmd[256] = "xterm -e man man";
 	conf.help_cmd = NULL;
+	conf.long_out = False;
 	for (i = 1; i < argc; i++) {
 		arg = argv[i];
 		if (strncmp(arg,"--h",3) == 0 || strncmp(arg,"-h",2) == 0)
 			help();
 		else if (strncmp(arg,"--v",3) == 0 || strncmp(arg,"-v",2) == 0)
 			version();
+		else if (strncmp(arg,"--l",3) == 0 || strncmp(arg,"-l",2) == 0)
+			conf.long_out = True;
 		else if (strncmp(arg,"-c",2) == 0 && (++i) < argc)
 			rcname = argv[i];
 		else

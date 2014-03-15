@@ -28,6 +28,11 @@ import pygtk
 import gtk
 
 def main(argv):
+	if (argv[0] == "--long"):
+		opt_long = True
+		del argv[0]
+	else:
+		opt_long = False
 	if (len(argv) == 0):
 		filelist = input_files()
 	else:
@@ -38,7 +43,10 @@ def main(argv):
 	for filename in filelist:
 		song = os.path.splitext(os.path.basename(filename))[0]
 		try:
-			FE = subprocess.check_output(["fex",filename])
+			if (opt_long):
+				FE = subprocess.check_output(["fex","--long",filename])
+			else:
+				FE = subprocess.check_output(["fex",filename])
 		except subprocess.CalledProcessError as err:
 			FE = "NA\n"
 		data = data + song + "\t" + FE
