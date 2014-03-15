@@ -443,6 +443,10 @@ int create_xlib() {
 	XSelectInput(dpy, win, EVENT_MASK | SubstructureRedirectMask |
 			PointerMotionMask);
 	XStoreName(dpy, win, "FEX: Frequency Excursion Calculator");
+	XClassHint *hint = XAllocClassHint();
+	hint->res_name = "FEX";
+	hint->res_class = "FEX";
+	XSetClassHint(dpy, win, hint);
 	WM_DELETE_WINDOW = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
 	XSetWMProtocols(dpy, win, &WM_DELETE_WINDOW, 1);
 #include "icon.xpm"
