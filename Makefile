@@ -2,13 +2,14 @@
 PROG     =  fex
 VER      =  2.0rc
 CC       ?= gcc
-CFLAGS   += `pkg-config --cflags x11 cairo freetype2 fftw3 sndfile`
-LDFLAGS  += `pkg-config --libs x11 cairo freetype2 fftw3 sndfile` -lm -lXpm
+DEPS     =  x11 cairo freetype2 fftw3 sndfile
+DEFS		=  -DPROGRAM_NAME=${PROG} -DPROGRAM_VER=${VER}
+CFLAGS   += $(shell pkg-config --cflags ${DEPS}) ${DEFS}
+LDLIBS   += $(shell pkg-config --cflags ${DEPS}) -lm lXpm
 PREFIX   ?= /usr
 MODULES  =  config fex fft spectro wave xlib
 HEADERS  =  fex.h
 MANPAGES =  fex.1 fex-help.1
-DEFS		=  -DPROGRAM_NAME=${PROG} -DPROGRAM_VER=${VER}
 VPATH    =  src:doc
 
 ${PROG}: ${MODULES:%=%.o}
