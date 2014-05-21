@@ -1,4 +1,3 @@
-
 PROG     =  fex
 VER      =  2.0rc
 CC       ?= gcc
