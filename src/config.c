@@ -60,6 +60,7 @@ static inline void help() {
 	printf("\n"
 		"USAGE\n  " STRING(PROGRAM_NAME) " <options> <wavefile>\n\n"
 		"OPTIONS\n"
+		"  -l|--long                long output (path, duration, + FE)\n"
 		"  -v|--version             show version information then exit\n"
 		"  -h|--help                show help information then exit\n\n"
 		"SEE ALSO\n"
@@ -74,6 +75,7 @@ const char *configure(int argc, const char **argv) {
 	char help_cmd[256] = "xterm -e man man";
 	conf.help_cmd = NULL;
 	conf.long_out = False;
+	conf.layers = True;
 	for (i = 1; i < argc; i++) {
 		arg = argv[i];
 		if (strncmp(arg,"--h",3) == 0 || strncmp(arg,"-h",2) == 0)

@@ -40,7 +40,7 @@ static int crop(int, int);
 static int erase(int, int);
 static int eraser_cursor(int, int);
 static int move(double, double);
-static int play();
+static int play(const char *);
 static int pt_line(double, double);
 static int screenshot();
 static int sp_floor(double);
@@ -173,6 +173,7 @@ void keypress(XEvent *ev) {
 		else if (sym == XK_k || sym == XK_Up) pt_line(0.2,0);
 		else if (sym == XK_h || sym == XK_Left) pt_line(0,-0.2);
 		else if (sym == XK_l || sym == XK_Right) pt_line(0,0.2);
+		else if (sym == XK_p) play("0.5");
 	}
 	else if (sym == XK_j || sym == XK_Down) move(0,0.02);
 	else if (sym == XK_k || sym == XK_Up) move(0,-0.02);
@@ -203,7 +204,12 @@ void keypress(XEvent *ev) {
 		XDefineCursor(dpy, win, None);
 		info->draw(info);
 	}
-	else if (sym == XK_p) play();
+	else if (sym == XK_p) play("1.0");
+	else if (sym == XK_l) {
+		conf.layers = !conf.layers;
+		spectro_draw();
+		XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
+	}
 	else if (sym == XK_u && mode & (MODE_ERASE)) erase(-1,-1);
 	while(XCheckMaskEvent(dpy, KeyPressMask, ev));
 }
@@ -255,11 +261,12 @@ int crop(int x, int y) {
 		XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
 		return 0;
 	}
-	float oldy = spect->fft_y;
+	int oldy = spect->fft_y;
 	spect->fft_x = spect->fft_w * x1/(ww*xsc) - 1.0*xoff + spect->fft_x;
 	spect->fft_y = spect->fft_h*(1.0-y1/(wh*ysc))-1.0*yoff+spect->fft_y;
 	spect->fft_w = spect->fft_w * x2/(ww*xsc) - 1.0*xoff - spect->fft_x;
-	spect->fft_h = spect->fft_h*(1.0-y2/(wh*ysc))-1.0*yoff - oldy;
+	spect->fft_h = spect->fft_h*(1.0-y2/(wh*ysc))-1.0*yoff -
+		oldy + spect->fft_x;
 	spectro_spec();
 	spectro_thresh();
 	spectro_points();
@@ -359,7 +366,7 @@ int move(double x, double y) {
 	}
 }
 
-int play() {
+int play(const char *speed) {
 	if (!fork()==0) {
 		close(ConnectionNumber(dpy));
 		char start[12], end[12], mid[12], wid[12];
@@ -372,7 +379,8 @@ int play() {
 		sprintf(start,"=%lf",_start); sprintf(end,"=%lf",_end);
 		sprintf(mid,"%lfk",_mid); sprintf(wid,"%lfk",_wid);
 		execl("/usr/bin/play", "play", "-q", spect->fname,
-				"trim", start, end, "bandpass", mid, wid, NULL);
+				"trim", start, end, "bandpass", mid, wid,
+				"speed", speed, NULL);
 		perror("Fex Play");
 		exit(1);
 	}

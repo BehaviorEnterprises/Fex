@@ -34,20 +34,19 @@ config.o: config.c config.h ${HEADERS}
 install: ${PROG} ${MANPAGES}
 	@install -Dm755 ${PROG} ${DESTDIR}${PREFIX}/bin/${PROG}
 	@install -Dm755 src/${PROG}-gtk ${DESTDIR}${PREFIX}/bin/${PROG}-gtk
-	@install -Dm644 doc/${PROG}.1 ${DESTDIR}${PREFIX}/share/man/man1/${PROG}.1
-	@install -Dm644 doc/${PROG}-help.1 ${DESTDIR}${PREFIX}/share/man/man1/${PROG}-help.1
+	@install -Dm644 ${PROG}.1 ${DESTDIR}${PREFIX}/share/man/man1/${PROG}.1
+	@install -Dm644 ${PROG}-help.1 ${DESTDIR}${PREFIX}/share/man/man1/${PROG}-help.1
 	@install -Dm644 share/config ${DESTDIR}${PREFIX}/share/${PROG}/config
 	@install -Dm644 share/icon.png ${DESTDIR}${PREFIX}/share/pixmaps/${PROG}.png
 	@install -Dm644 share/${PROG}.desktop ${DESTDIR}${PREFIX}/share/applications/${PROG}.desktop
 
 ${MANPAGES}: fex%.1: fex%-1.tex
-	@echo -e "\033[1;34m  ->\033[0m Building $@"
-	@latex2man $< doc/$@
+	@latex2man $< $@
 
 man: ${MANPAGES}
 
 clean:
-	@rm -f ${MODULES:%=%.o}
+	@rm -f ${MODULES:%=%.o} ${MANPAGES}
 
 distclean: clean
 	@rm -f ${PROG} ${PROG}-${VER}.tar.gz
