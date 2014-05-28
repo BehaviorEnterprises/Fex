@@ -205,7 +205,7 @@ void keypress(XEvent *ev) {
 		info->draw(info);
 	}
 	else if (sym == XK_p) play("1.0");
-	else if (sym == XK_l) {
+	else if (sym == XK_t) {
 		conf.layers = !conf.layers;
 		spectro_draw();
 		XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
