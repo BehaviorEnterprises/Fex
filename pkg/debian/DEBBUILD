@@ -1,0 +1,46 @@
+maintainer="jessse@mccluresk9.com"
+pkgname="fex"
+pkgver="2"
+pkgrel=1
+pkgdesc='Frequency Excursion Calculator'
+url='http://github.com/TrilbyWhite/fex.git'
+license='GPL3'
+arch="$(uname -m)"
+depends=(
+	'desktop-file-utils'
+	'libcairo2'
+	'libfftw3-3'
+	'libxpm4'
+	'libsndfile1'
+	'python2.6'
+)
+makedepends=(
+	'build-essential'
+	'dpkg-dev'
+	'checkinstall'
+	'git'
+	'libcairo2-dev'
+	'libfftw3-dev'
+	'libsndfile1-dev'
+	'libxpm-dev'
+	'texlive-core'
+)
+optdepends=('sox')
+source=("git://github.com/TrilbyWhite/fex.git")
+sha256sums=('SKIP')
+
+prepare() {
+	cd "${pkgname}"
+	pkgver="2.$(git rev-list --count HEAD).$(git describe --always)"
+}
+
+build() {
+	cd "${pkgname}"
+	make
+}
+
+post_install() {
+	update-desktop-database -q
+}
+
+# vim: ft=sh
