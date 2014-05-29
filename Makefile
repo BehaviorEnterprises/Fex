@@ -1,7 +1,7 @@
 PROG     =  fex
 VER      =  2.0rc
 CC       ?= gcc
-DEPS     =  x11 cairo freetype2 fftw3 sndfile
+DEPS     =  x11 cairo freetype2 fftw3 sndfile alsa
 DEFS		=  -DPROGRAM_NAME=${PROG} -DPROGRAM_VER=${VER}
 CFLAGS   += $(shell pkg-config --cflags ${DEPS}) ${DEFS}
 LDLIBS   += $(shell pkg-config --libs ${DEPS}) -lm -lXpm

@@ -42,6 +42,8 @@
 #include <cairo-xlib.h>
 #include <cairo-ft.h>
 
+#include <alsa/asoundlib.h>
+
 #define RGBA_SPECT	0x00
 #define RGBA_THRESH	0x01
 #define RGBA_POINTS	0x02
@@ -126,6 +128,7 @@ extern int xlib_event_loop();
 /* global data */
 Config conf;
 Spectro *spect;
+Wave *wav;
 
 #endif /* __FEX_H__ */
 

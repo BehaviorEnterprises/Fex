@@ -40,7 +40,7 @@ static int crop(int, int);
 static int erase(int, int);
 static int eraser_cursor(int, int);
 static int move(double, double);
-static int play(const char *);
+static int play(float);
 static int pt_line(double, double);
 static int screenshot();
 static int sp_floor(double);
@@ -173,7 +173,7 @@ void keypress(XEvent *ev) {
 		else if (sym == XK_k || sym == XK_Up) pt_line(0.2,0);
 		else if (sym == XK_h || sym == XK_Left) pt_line(0,-0.2);
 		else if (sym == XK_l || sym == XK_Right) pt_line(0,0.2);
-		else if (sym == XK_p) play("0.5");
+		else if (sym == XK_p) play(0.5);
 	}
 	else if (sym == XK_j || sym == XK_Down) move(0,0.02);
 	else if (sym == XK_k || sym == XK_Up) move(0,-0.02);
@@ -204,7 +204,7 @@ void keypress(XEvent *ev) {
 		XDefineCursor(dpy, win, None);
 		info->draw(info);
 	}
-	else if (sym == XK_p) play("1.0");
+	else if (sym == XK_p) play(1.0);
 	else if (sym == XK_t) {
 		conf.layers = !conf.layers;
 		spectro_draw();
@@ -366,7 +366,38 @@ int move(double x, double y) {
 	}
 }
 
-int play(const char *speed) {
+int play(float speed) {
+	unsigned int i;
+	snd_pcm_t *handle;
+	snd_pcm_sframes_t frames;
+	snd_pcm_open(&handle, "default", SND_PCM_STREAM_PLAYBACK, 0);
+	snd_pcm_set_params(handle, SND_PCM_FORMAT_FLOAT64,
+			SND_PCM_ACCESS_RW_INTERLEAVED, 1, wav->rate * speed, 1, 100000);
+	double *buffer = wav->d;
+	int block = 12 * speed;
+	int steps = ww/block;
+	int step_size = wav->samples/steps;
+	XEvent ev;
+	for (i = 0; i < steps; i++) {
+		XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
+		XDrawLine(dpy, win, gc, i*block, 0, i*block, wh);
+		XDrawLine(dpy, win, gc, i*block+block-1, 0, i*block+block-1, wh);
+		XFlush(dpy);
+		buffer += step_size;
+		frames = snd_pcm_writei(handle, buffer, step_size);
+		if (frames < 0)
+			frames = snd_pcm_recover(handle, frames, 0);
+		if (frames < 0) break;
+		if (XCheckMaskEvent(dpy, KeyPressMask, &ev)) {
+			XPutBackEvent(dpy, &ev);
+			XFlush(dpy);
+			break;
+		}
+	}
+	snd_pcm_close(handle);
+	XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
+	XFlush(dpy);
+return 0;
 	if (!fork()==0) {
 		close(ConnectionNumber(dpy));
 		char start[12], end[12], mid[12], wid[12];
