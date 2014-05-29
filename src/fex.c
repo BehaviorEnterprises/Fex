@@ -38,7 +38,6 @@ int main(int argc, const char **argv) {
 	Wave *wav = create_wave(fname);
 	FFT *fft = create_fft(wav);
 	create_spectro(fft, fname);
-//fft->dur = wav->samples / (double)wav->rate;
 	free_wave(&wav);
 
 	xlib_event_loop();

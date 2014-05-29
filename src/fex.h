@@ -71,7 +71,6 @@ typedef struct FFT {
 	double *time;
 	double *freq;
 	double max, min;
-	double dur;
 	int nfreq, ntime;
 	char **mask;
 } FFT;

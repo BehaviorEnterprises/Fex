@@ -153,7 +153,10 @@ void keypress(XEvent *ev) {
 		else if (sym == XK_k || sym == XK_Up) threshold(0.05);
 		else if (sym == XK_h || sym == XK_Left) sp_floor(-0.05);
 		else if (sym == XK_l || sym == XK_Right) sp_floor(0.05);
-		//else if (sym == XK_p) play(0.25);
+		else if (sym == XK_p) play(0.1666);
+	}
+	else if (mod == (Mod1Mask | ShiftMask)) {
+		if (sym == XK_p) play(0.08333);
 	}
 	else if (mod == ControlMask) {
 		if (sym == XK_q) running = False;
@@ -162,20 +165,21 @@ void keypress(XEvent *ev) {
 		else if (sym == XK_k || sym == XK_Up) zoom(0.025);
 		else if (sym == XK_h || sym == XK_Left) return;
 		else if (sym == XK_l || sym == XK_Right) return;
-		//else if (sym == XK_p) play(0.33);
+		else if (sym == XK_p) play(0.33);
 	}
 	else if (mod == Mod1Mask) {
 		if (sym == XK_j || sym == XK_Down) eraser_cursor(-1,-1);
 		else if (sym == XK_k || sym == XK_Up) eraser_cursor(1,1);
 		else if (sym == XK_h || sym == XK_Left) eraser_cursor(-1,1);
 		else if (sym == XK_l || sym == XK_Right) eraser_cursor(1,-1);
+		else if (sym == XK_p) play(0.25);
 	}
 	else if (mod == ShiftMask) {
 		if (sym == XK_j || sym == XK_Down) pt_line(-0.2,0);
 		else if (sym == XK_k || sym == XK_Up) pt_line(0.2,0);
 		else if (sym == XK_h || sym == XK_Left) pt_line(0,-0.2);
 		else if (sym == XK_l || sym == XK_Right) pt_line(0,0.2);
-		//else if (sym == XK_p) play(0.5);
+		else if (sym == XK_p) play(0.5);
 	}
 	else if (sym == XK_j || sym == XK_Down) move(0,0.02);
 	else if (sym == XK_k || sym == XK_Up) move(0,-0.02);
@@ -263,17 +267,12 @@ int crop(int x, int y) {
 		XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
 		return 0;
 	}
-//fprintf(stderr,"%d x %d + %d + %d\n",
-//spect->fft_w, spect->fft_h, spect->fft_x, spect->fft_y);
 	int oldy = spect->fft_y;
 	spect->fft_x = spect->fft_w * x1/(ww*xsc) - 1.0*xoff + spect->fft_x;
 	spect->fft_y = spect->fft_h*(1.0-y1/(wh*ysc))-1.0*yoff+spect->fft_y;
 	spect->fft_w = spect->fft_w * x2/(ww*xsc) - 1.0*xoff - spect->fft_x;
-	//spect->fft_h = spect->fft_h*(1.0-y2/(wh*ysc))-1.0*yoff - oldy;
-	spect->fft_h = spect->fft_h*(1.0-y2/(wh*ysc))-1.0*yoff -
-		oldy + spect->fft_x;
-//fprintf(stderr,"%d x %d + %d + %d\n",
-//spect->fft_w, spect->fft_h, spect->fft_x, spect->fft_y);
+	spect->fft_h = spect->fft_h*(1.0-y2/(wh*ysc))-1.0*yoff +
+			oldy - spect->fft_y;
 	spectro_spec();
 	spectro_thresh();
 	spectro_points();
@@ -374,37 +373,47 @@ int move(double x, double y) {
 }
 
 int play(float speed) {
+	/* calculate fft coordinates of current view window */
+	int tw = spect->fft_w / xsc;
+	int th = spect->fft_h / ysc;
+	int tx = spect->fft_x - xoff;
+	int ty = spect->fft_y - yoff + spect->fft_h - th;
+	if (tx + tw >= spect->fft->ntime) tw = spect->fft->ntime - tx - 1;
+	if (ty + th >= spect->fft->nfreq) th = spect->fft->nfreq - ty - 1;
+	/* get time and frequency values of current view window */
+	double _start = spect->fft->time[tx];
+	double _end = spect->fft->time[tx+tw];
+	double _low = spect->fft->freq[ty];
+	double _hi = spect->fft->freq[ty+th];
+	double _mid = (_hi+_low)/2.0;
+	double _wid = (_hi-_low)/2.0;
+	/* fork and play */
 	if (!fork()==0) {
 		close(ConnectionNumber(dpy));
-		char start[12], end[12], mid[12], wid[12]/*, sp[8]*/;
-		//snprintf(sp,7,"%3f",speed);
-		double _start = spect->fft->time[spect->fft_x];
-		double _end = spect->fft->time[spect->fft_x+spect->fft_w-1];
-		double _low = spect->fft->freq[spect->fft_y];
-		double _hi = spect->fft->freq[spect->fft_y+spect->fft_h-1];
-		double _mid = (_hi+_low)/2.0;
-		double _wid = (_hi-_low)/2.0;
+		char start[12], end[12], mid[12], wid[12], sp[8];
+		snprintf(sp,7,"%3f",speed);
 		sprintf(start,"=%lf",_start); sprintf(end,"=%lf",_end);
 		sprintf(mid,"%lfk",_mid); sprintf(wid,"%lfk",_wid);
 		execl("/usr/bin/play", "play", "-q", spect->fname,
 				"trim", start, end, "bandpass", mid, wid,
-				"speed", "1.0", NULL);
+				"speed", sp, NULL);
 		perror("Fex Play");
 		exit(1);
 	}
-//	int i, step = 12;
-//	useconds_t usec = spect->fft->dur * 1000000.0 * step/ (double) ww;
-//	step = speed * step + 0.5;
-//fprintf(stderr,"%d %d\n",usec, step);
-//	for (i = 0; i < ww; i+=step) {
-//		XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
-//		XDrawLine(dpy, win, gc, i, 0, i, wh);
-//		XDrawLine(dpy, win, gc, i+step, 0, i+step, wh);
-//		XFlush(dpy);
-//		usleep(usec);
-//	}
-//	XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
-//	XFlush(dpy);
+	/* draw cursor while playing */
+	int i, step = 12;
+	double dur = _end - _start;
+	useconds_t usec = dur * 1000000.0 * step / (double) ww;
+	step = speed * step + 0.5;
+	for (i = 0; i < ww; i+=step) {
+		XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
+		XDrawLine(dpy, win, gc, i, 0, i, wh);
+		XDrawLine(dpy, win, gc, i+step, 0, i+step, wh);
+		XFlush(dpy);
+		usleep(usec);
+	}
+	XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
+	XFlush(dpy);
 }
 
 int pt_line(double p, double l) {
