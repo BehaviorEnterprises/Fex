@@ -35,13 +35,13 @@ int spectro_draw() {
 	cairo_fill(c);
 	set_color(c,RGBA_SPECT);
 	cairo_mask_surface(c,spect->m_spec,0,0);
-	if (conf.layers) {
+//	if (conf.layers) {
 		set_color(c,RGBA_THRESH);
 		cairo_mask_surface(c,spect->m_thresh,0,0);
 		cairo_scale(c,1.0/conf.scale,1.0/conf.scale);
 		cairo_set_source_surface(c,spect->s_points,0,0);
 		cairo_paint(c);
-	}
+//	}
 	cairo_destroy(c);
 }
 

@@ -35,14 +35,13 @@ int die(const char *msg, ...) {
 
 int main(int argc, const char **argv) {
 	const char *fname = configure(argc,argv);
-//	Wave *wav = create_wave(fname);
-wav = create_wave(fname);
+	Wave *wav = create_wave(fname);
 	FFT *fft = create_fft(wav);
 	create_spectro(fft, fname);
-//	free_wave(&wav);
+//fft->dur = wav->samples / (double)wav->rate;
+	free_wave(&wav);
 
 	xlib_event_loop();
-free_wave(&wav);
 	if (spect->fex > 0 && conf.long_out)
 		fprintf(stdout,"%.3lf\t%.3lf\t%.3lf\n",
 				spect->pex, spect->tex, spect->fex);

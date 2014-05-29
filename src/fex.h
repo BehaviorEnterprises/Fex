@@ -71,6 +71,7 @@ typedef struct FFT {
 	double *time;
 	double *freq;
 	double max, min;
+	double dur;
 	int nfreq, ntime;
 	char **mask;
 } FFT;
@@ -128,7 +129,6 @@ extern int xlib_event_loop();
 /* global data */
 Config conf;
 Spectro *spect;
-Wave *wav;
 
 #endif /* __FEX_H__ */
 
