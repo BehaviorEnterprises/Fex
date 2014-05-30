@@ -5,9 +5,10 @@ pkgrel=1
 pkgdesc='Frequency Excursion Calculator'
 url='http://github.com/TrilbyWhite/fex.git'
 license='GPL3'
-arch="$(uname -m)"
+arch="$(dpkg --print-architecture)"
 depends=(
 	'desktop-file-utils'
+	'libasound2'
 	'libcairo2'
 	'libfftw3-3'
 	'libxpm4'
@@ -19,11 +20,13 @@ makedepends=(
 	'dpkg-dev'
 	'checkinstall'
 	'git'
+	'libasound2-dev'
 	'libcairo2-dev'
 	'libfftw3-dev'
 	'libsndfile1-dev'
+	'libx11-dev'
 	'libxpm-dev'
-	'texlive-core'
+	'texlive'
 )
 optdepends=('sox')
 source=("git://github.com/TrilbyWhite/fex.git")

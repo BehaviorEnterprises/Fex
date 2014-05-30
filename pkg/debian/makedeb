@@ -1,15 +1,15 @@
-#!/usr/bin/bash
+#!/bin/bash
 ## comment any lines in main to skip that step ##
 main() {
-	sudo get_deps
+	startdir=$(pwd)
+	get_deps
 	get_source
 	prepare
 	build
-	sudo apt get uninstall $remove_deps
-	sudo apt get uninstall $remove_build_deps
-	sudo package
-	sudo dpkg -i "${pkgname}_${pkgver}-${pkgrel}_${arch}.deb"
-	sudo post_install
+	sudo apt-get uninstall $remove_deps
+	sudo apt-get uninstall $remove_build_deps
+	package
+	mv "${pkgname}_${pkgver}-${pkgrel}_${arch}.deb" $startdir
 }
 
 ## do not edit below this line ##
@@ -33,11 +33,11 @@ get_deps() {
 	for dep in "${depends[@]}"; do
 		# check if installed, continue if exists
 		to_install="${to_install} $dep"
-		deps="${deps}${dep},"
+		deps="${deps}${dep}, "
 		remove_deps="${remove_deps} $dep"
 	done
 	sudo apt-get install $to_install
-	deps="${deps/,$//}"
+	deps="${deps%, }"
 }
 
 get_source() {
@@ -53,20 +53,19 @@ get_source() {
 package() {
 	checkinstall \
 		--default \
+		--install=no \
 		--type debian \
 		--pkgname "${pkgname}" \
 		--pkgversion "${pkgver}" \
 		--pkgrelease "${pkgrel}" \
 		--pkglicense "${license}" \
-	#	--pkggroup ?? \
 		--pkgsource "${url}" \
 		--maintainer "${maintainer}" \
-		--requires "${deps}"
-	#	--dpkgflags ?? \
+		--requires "${deps}" \
 		--gzman \
-	#	--review-control \
 		make install
 }
 
 main
+
 
