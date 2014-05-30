@@ -36,6 +36,7 @@ install: ${PROG} ${MANPAGES}
 	@install -Dm755 src/${PROG}-gtk ${DESTDIR}${PREFIX}/bin/${PROG}-gtk
 	@install -Dm644 ${PROG}.1 ${DESTDIR}${PREFIX}/share/man/man1/${PROG}.1
 	@install -Dm644 ${PROG}-help.1 ${DESTDIR}${PREFIX}/share/man/man1/${PROG}-help.1
+	@mkdir ${DESTDIR}${PREFIX}/share/${PROG}
 	@install -Dm644 share/config ${DESTDIR}${PREFIX}/share/${PROG}/config
 	@install -Dm644 share/icon.png ${DESTDIR}${PREFIX}/share/pixmaps/${PROG}.png
 	@install -Dm644 share/${PROG}.desktop ${DESTDIR}${PREFIX}/share/applications/${PROG}.desktop
