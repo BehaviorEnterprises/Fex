@@ -19,8 +19,8 @@ if [[ ! -f DEBBUILD ]]; then
 fi
 source DEBBUILD
 
-remove_deps=()
-remove_build_deps=()
+remove_deps=""
+remove_build_deps=""
 deps=""
 
 get_deps() {
