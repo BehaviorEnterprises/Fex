@@ -50,7 +50,7 @@ static const WindowFunction windows[] = {
 
 static inline void version() {
 	printf(STRING(PROGRAM_NAME) " v" STRING(PROGRAM_VER)
-", Copyright © 2013-2014 Jesse McClure <www.mccluresk9.com>\n"
+", Copyright © 2013-2014 Jesse McClure <www.behaviorenterprises.com>\n"
 "You should have received a copy of the GNU General Public License\n"
 "along with this program.  If not, see <http://www.gnu.org/licenses/>.\n");
 	 exit(0);

@@ -13,23 +13,11 @@ VPATH    =  src:doc
 
 ${PROG}: ${MODULES:%=%.o}
 
-#	@echo -e "\033[1;34m  ->\033[0m Linking $@"
-#	@cd src && ${CC} -o ../$@ ${MODULES:%=%.o} ${LDFLAGS}
-
 xlib.o: xlib.c xlib_toolwin.c ${HEADERS}
-
-#	@echo -e "\033[1;34m  ->\033[0m Building $@"
-#	@${CC} -c -o src/$@ $< ${CFLAGS} ${DEFS}
 
 config.o: config.c config.h ${HEADERS}
 
-#	@echo -e "\033[1;34m  ->\033[0m Building $@"
-#	@${CC} -c -o src/$@ $< ${CFLAGS} ${DEFS}
-
 %.o: %.c ${HEADERS}
-
-#	@echo -e "\033[1;34m  ->\033[0m Building $@"
-#	@${CC} -c -o src/$@ $< ${CFLAGS} ${DEFS}
 
 install: ${PROG} ${MANPAGES}
 	@install -Dm755 ${PROG} ${DESTDIR}${PREFIX}/bin/${PROG}
@@ -42,15 +30,18 @@ install: ${PROG} ${MANPAGES}
 	@install -Dm644 share/${PROG}.desktop ${DESTDIR}${PREFIX}/share/applications/${PROG}.desktop
 
 ${MANPAGES}: fex%.1: fex%-1.tex
-	@latex2man $< $@
+	@latex2man $< doc/$@
 
 man: ${MANPAGES}
 
 clean:
-	@rm -f ${MODULES:%=%.o} ${MANPAGES}
+	@rm -f ${MODULES:%=%.o}
 
 distclean: clean
 	@rm -f ${PROG} ${PROG}-${VER}.tar.gz
+
+moreclean: distclean
+	@rm -f doc/fex.1 doc/fex-help.1
 
 dist: distclean
 	@tar -czf ${PROG}-${VER}.tar.gz *
