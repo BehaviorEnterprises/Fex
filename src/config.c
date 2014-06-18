@@ -30,6 +30,7 @@
 #define C_TYPE_F	0x02
 #define C_TYPE_LF	0x03
 #define C_TYPE_S	0x04
+#define C_TYPE_LN	0x05
 
 #define STRING(s)		STRINGIFY(s)
 #define STRINGIFY(s)	#s
@@ -38,7 +39,7 @@
 static FT_Library library;
 static FT_Face face, bface;
 static WindowFunction custom;
-static const WindowFunction windows[] = {
+static WindowFunction windows[] = {
 	{ "hanning",         {0.5,       0.5,       0.0,       0.0}       },
 	{ "hamming",         {0.54,      0.46,      0.0,       0.0}       },
 	{ "blackman",        {0.42659,   0.49656,   0.076849,  0.0}       },
@@ -102,7 +103,7 @@ const char *configure(int argc, const char **argv) {
 	if (!rc) die("unable to open configuration file");
 	char line[LINE_LEN], prefix[32], option[32], fmt[LINE_LEN];
 	char window[32], font_path1[LINE_LEN], font_path2[LINE_LEN];
-	const char *fspec[] = { "", "%d ","%f ", "%lf ", "%[^\n]" };
+	const char *fspec[] = { "", "%d ","%f ", "%lf ", "%s", "%[^\n]" };
 	int j, mode;
 	conf.thresh = 14.0;
 	conf.spect_floor = 40.0;
@@ -139,7 +140,9 @@ const char *configure(int argc, const char **argv) {
 	if (!conf.hop) conf.hop = conf.winlen / 4;
 	conf.thresh *= -1;
 	conf.spect_floor *= -1;
-	if (strlen(window))
+	if (strncasecmp(window,"custom",6) == 0)
+		conf.win = (WindowFunction *) &custom;
+	else if (strlen(window))
 		for (i = 0; i < sizeof(windows)/sizeof(windows[0]); i++)
 			if (!strncasecmp(window,windows[i].type,strlen(window)))
 				conf.win = (WindowFunction *) &windows[i];

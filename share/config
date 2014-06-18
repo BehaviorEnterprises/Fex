@@ -20,7 +20,9 @@
 ##   scale: number of graphical units per data unit
 ##   window: one of the following window functions for the FFT
 ##     hanning, hamming, blackman, nutall, blackman-nutall,
-##     blackman-harris, rectangular, (custom coming soon)
+##     blackman-harris, rectangular, custom
+##       Custom must be followed by up to 4 numbers specifying the
+##       coefficients for a generalized cosine window function
 ##   fontName, fontBold: full paths to font
 ##   fontSize: font size in pixels
 ##   help: command for launching the help page
