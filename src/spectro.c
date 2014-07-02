@@ -28,6 +28,42 @@
 	cairo_set_line_width(x, conf.col[n].w);						\
 }
 
+int img_draw() {
+	cairo_surface_t *img;
+	img = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, spect->fft_w*conf.scale, spect->fft_h*conf.scale * 4);
+	cairo_t *ctx;
+	ctx = cairo_create(img);
+	cairo_scale(ctx,conf.scale,-4.0 * conf.scale);
+	cairo_translate(ctx, 0, -1.0 * spect->fft_h);
+	cairo_set_source_rgba(ctx,1.0,1.0,1.0,1.0);
+	cairo_rectangle(ctx,0,0,spect->fft_w,spect->fft_h);
+	cairo_fill(ctx);
+	set_color(ctx,RGBA_SPECT);
+	cairo_mask_surface(ctx,spect->m_spec,0,0);
+	cairo_surface_write_to_png(img,"/tmp/img1.png");
+	cairo_destroy(ctx);
+	cairo_surface_destroy(img);
+	img = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, spect->fft_w*conf.scale, spect->fft_h*conf.scale * 4);
+	ctx = cairo_create(img);
+	cairo_scale(ctx,conf.scale,-4.0 * conf.scale);
+	cairo_translate(ctx, 0, -1.0 * spect->fft_h);
+	cairo_set_source_rgba(ctx, conf.col[RGBA_THRESH].r, conf.col[RGBA_THRESH].g,
+		conf.col[RGBA_THRESH].b, 0.8);
+	cairo_mask_surface(ctx,spect->m_thresh,0,0);
+	cairo_surface_write_to_png(img,"/tmp/img2.png");
+	cairo_destroy(ctx);
+	cairo_surface_destroy(img);
+	img = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, spect->fft_w*conf.scale, spect->fft_h*conf.scale * 4);
+	ctx = cairo_create(img);
+	cairo_scale(ctx, 1.0, -4.0);
+	cairo_translate(ctx, 0, -1.0 * spect->fft_h * conf.scale);
+	cairo_set_source_surface(ctx,spect->s_points, 0, 0);
+	cairo_paint_with_alpha(ctx, 0.8);
+	cairo_surface_write_to_png(img,"/tmp/img3.png");
+	cairo_destroy(ctx);
+	cairo_surface_destroy(img);
+}
+
 int spectro_draw() {
 	cairo_t *c = xlib_context();
 	cairo_set_source_rgba(c,1.0,1.0,1.0,1.0);

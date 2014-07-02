@@ -160,7 +160,8 @@ void keypress(XEvent *ev) {
 	}
 	else if (mod == ControlMask) {
 		if (sym == XK_q) running = False;
-		if (sym == XK_s) screenshot();
+		else if (sym == XK_s) screenshot();
+		else if (sym == XK_i) img_draw();
 		else if (sym == XK_j || sym == XK_Down) zoom(-0.025);
 		else if (sym == XK_k || sym == XK_Up) zoom(0.025);
 		else if (sym == XK_h || sym == XK_Left) return;

@@ -19,7 +19,7 @@ config.o: config.c config.h ${HEADERS}
 
 %.o: %.c ${HEADERS}
 
-install: ${PROG} ${MANPAGES}
+install: ${PROG}
 	@install -Dm755 ${PROG} ${DESTDIR}${PREFIX}/bin/${PROG}
 	@install -Dm755 src/${PROG}-gtk ${DESTDIR}${PREFIX}/bin/${PROG}-gtk
 	@install -Dm644 doc/${PROG}.1 ${DESTDIR}${PREFIX}/share/man/man1/${PROG}.1
@@ -41,7 +41,7 @@ distclean: clean
 	@rm -f ${PROG} ${PROG}-${VER}.tar.gz
 
 moreclean: distclean
-	@rm -f doc/fex.1 doc/fex-help.1
+	@cd doc && rm -f ${MANPAGES}
 
 dist: distclean
 	@tar -czf ${PROG}-${VER}.tar.gz *

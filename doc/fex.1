@@ -1,0 +1,131 @@
+'\" t
+.\" Manual page created with latex2man on Wed Jul  2 13:29:59 EDT 2014
+.\" NOTE: This file is generated, DO NOT EDIT.
+.de Vb
+.ft CW
+.nf
+..
+.de Ve
+.ft R
+
+.fi
+..
+.TH "FEX" "1" "02 July 2014" "Frequency Excusion " "Frequency Excusion "
+.SH NAME
+
+.PP
+Fex
+\- The frequency excursion calculator 
+.PP
+.SH DESCRIPTION
+
+.PP
+Fex
+is a bioacoustic analysis tool for calculating the frequency 
+excursion of an audio recording of bird songs or other sound waves. 
+.PP
+.SH FEX\-GTK
+
+.PP
+Fex\-gtk
+is a wrapper script for fex that facilitates batch 
+processing of large numbers of wave files. Fex\-gtk
+can be 
+provided a list of file names, or can be run with no parameters to 
+provide a dialog window to select input wave files. Fex
+will be 
+run on each input file, and the results can either be stored to a data 
+file or displayed in a dialog window upon completion. 
+.PP
+Fex\-gtk
+is also the executable target of fex.desktop
+to 
+allow for drag\-and\-drop operation of fex\&.
+The desktop file can 
+accept any number of wave files as a drop target. 
+.PP
+.SH CONFIGURATION
+
+Fex
+is configured via a runtime configuration file read from one 
+of 
+$XDG_CONFIG_HOME/fex/config,
+$HOME/.config/fex/config,
+$HOME/.fexrc,
+or 
+/usr/share/fex/config\&.
+.PP
+Read the example configuration file at /usr/share/fex/config
+for 
+a complete description of the available options. Those listed below are 
+only the most likely to be changed. Settings not listed below should be 
+changed only with caution. 
+.PP
+.SS SETTINGS
+.PP
+The options below are configured with the following format: 
+.PP
+\fBset\fP
+\fIoption\fP
+= \fIvalue\fP
+.PP
+.TP
+\fBthreshold\fP
+ Amplitude at which points can be considered part of the signal 
+in dB below the maximum amplitude. 
+.TP
+\fBfloor\fP
+ Sound floor for the spectrogram display 
+in dB below the maximum amplitude. 
+.TP
+\fBbandpass\fP
+ Hi pass and low pass filter values in kHz. 
+.PP
+.SS COLORS
+.PP
+Colors are configured with the following format where each setting is a 
+floating point value between 0.00 and 1.00: 
+.PP
+\fBcolor\fP
+\fIelement\fP
+= \fIRed\fP
+\fIGreen\fP
+\fIBlue\fP
+\fIAlpha\fP
+\fIWidth\fP
+.PP
+.TP
+\fBspectrogram\fP
+ Background spectrogram 
+.TP
+\fBthreshold\fP
+ Points above the current threshold 
+.TP
+\fBpoints\fP
+ Points included in the current frequency excursion calculation 
+.TP
+\fBlines\fP
+ Lines connecting the peak points 
+.PP
+.SH SEE ALSO
+
+.PP
+\fBfex\-help\fP(1)
+.PP
+\fBhttp://wiki.behaviorenterprises.com/index.php?title=Frequency_Excursion\fP
+.PP
+.SH AUTHOR
+
+Copyright (C)2013\-2014 Jesse McClure 
+.br
+License GPLv3: GNU GPL version 3 \fBhttp://gnu.org/licenses/gpl.html\fP
+.br
+This is free software: you are free to change and redistribute it. 
+.br
+There is NO WARRANTY, to the extent permitted by law. 
+.PP
+Submit bug reports via the website: 
+.br
+\fBhttp://behaviorenterprises.com/?page=software&package=fex\fP
+.PP
+.\" NOTE: This file is generated, DO NOT EDIT.
