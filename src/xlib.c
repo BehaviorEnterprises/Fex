@@ -333,10 +333,8 @@ int erase(int x, int y) {
 }
 
 int eraser_cursor(int w, int h) {
-	if ( !(mode & MODE_ERASE) ) {
-		XDefineCursor(dpy, win, None);
-		return 0;
-	}
+	XUndefineCursor(dpy, win);
+	if ( !(mode & MODE_ERASE) ) return 0;
 	if ( (ew+=w) < 3 ) ew = 3;
 	if ( (eh+=h) < 3 ) eh = 3;
 	if ( ew > ww/4 ) ew = ww / 4;
@@ -524,6 +522,7 @@ XFree(hints);
 }
 
 int free_xlib() {
+	XUndefineCursor(dpy, win);
 	toolwin_destroy();
 	XFlush(dpy);
 	XCloseDisplay(dpy);

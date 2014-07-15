@@ -1,33 +1,16 @@
-maintainer="jessse@mccluresk9.com"
+maintainer="jessse@behaviorenterprises.com"
 pkgname="fex"
 pkgver="2"
 pkgrel=1
 pkgdesc='Frequency Excursion Calculator'
-url='http://github.com/TrilbyWhite/fex.git'
+url='http://behaviorenterprises.com/software.html?package=fex'
 license='GPL3'
 arch="$(dpkg --print-architecture)"
-depends=(
-	'desktop-file-utils'
-	'libasound2'
-	'libcairo2'
-	'libfftw3-3'
-	'libxpm4'
-	'libsndfile1'
-	'python2.6'
-)
-makedepends=(
-	'build-essential'
-	'dpkg-dev'
-	'checkinstall'
-	'git'
-	'libasound2-dev'
-	'libcairo2-dev'
-	'libfftw3-dev'
-	'libsndfile1-dev'
-	'libx11-dev'
-	'libxpm-dev'
-	'texlive'
-)
+depends=('desktop-file-utils' 'libasound2' 'libcairo2' 'libfftw3-3'
+	'libxpm4' 'libsndfile1' 'python2.6')
+makedepends=('build-essential' 'dpkg-dev' 'checkinstall' 'git'
+	'libasound2-dev' 'libcairo2-dev' 'libfftw3-dev' 'libsndfile1-dev'
+	'libx11-dev' 'libxpm-dev' 'texlive')
 optdepends=('sox')
 source=("git://github.com/TrilbyWhite/fex.git")
 sha256sums=('SKIP')
