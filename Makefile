@@ -1,5 +1,5 @@
 PROG     =  fex
-VER      =  2.0rc
+VER      =  2.0
 CC       ?= gcc
 DEPS     =  x11 cairo freetype2 fftw3 sndfile
 DEFS		=  -DPROGRAM_NAME=${PROG} -DPROGRAM_VER=${VER}

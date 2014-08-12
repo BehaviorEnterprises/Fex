@@ -63,3 +63,4 @@
 	{ C_TYPE_LF, C_TYPE_LF, C_TYPE_LF, C_TYPE_LF, C_TYPE_LF },
 	{ &conf.col[6].r, &conf.col[6].g, &conf.col[6].b, &conf.col[6].a,
 			&conf.col[6].w } },
+

@@ -34,7 +34,7 @@
 
 #define STRING(s)		STRINGIFY(s)
 #define STRINGIFY(s)	#s
-#define LINE_LEN	256
+#define LINE_LEN		256
 
 static FT_Library library;
 static FT_Face face, bface;
@@ -72,11 +72,13 @@ static inline void help() {
 
 const char *configure(int argc, const char **argv) {
 	int i;
+	/* set defaults */
 	const char *arg, *fname = NULL, *rcname = NULL;
 	char help_cmd[256] = "xterm -e man man";
 	conf.help_cmd = NULL;
 	conf.long_out = False;
 	conf.layers = True;
+	/* process command line */
 	for (i = 1; i < argc; i++) {
 		arg = argv[i];
 		if (strncmp(arg,"--h",3) == 0 || strncmp(arg,"-h",2) == 0)
@@ -91,6 +93,7 @@ const char *configure(int argc, const char **argv) {
 			fname = argv[i];
 	}
 	if (!fname) die("no audio file provided");
+	/* find configuration file */
 	FILE *rc = NULL;
 	char *pwd = getenv("PWD");
 	if (rcname) rc = fopen(rcname,"r");
@@ -101,6 +104,7 @@ const char *configure(int argc, const char **argv) {
 	chdir(pwd);
 	if (!rc) rc = fopen("/usr/share/fex/config","r");
 	if (!rc) die("unable to open configuration file");
+	/* initialize conf structure and config reading variables */
 	char line[LINE_LEN], prefix[32], option[32], fmt[LINE_LEN];
 	char window[32], font_path1[LINE_LEN], font_path2[LINE_LEN];
 	const char *fspec[] = { "", "%d ","%f ", "%lf ", "%s", "%[^\n]" };
@@ -120,6 +124,7 @@ const char *configure(int argc, const char **argv) {
 	} cf[] = {
 		#include "config.h"
 	};
+	/* read config file */
 	while (fgets(line,LINE_LEN,rc)) {
 		if (line[0] == '#' || line[0] == '\n') continue;
 		sscanf(line,"%s %s",prefix,option);
@@ -137,6 +142,7 @@ const char *configure(int argc, const char **argv) {
 			}
 		}
 	}
+	/* set hop, threshold, floor, and windowing function */
 	if (!conf.hop) conf.hop = conf.winlen / 4;
 	conf.thresh *= -1;
 	conf.spect_floor *= -1;
@@ -146,6 +152,7 @@ const char *configure(int argc, const char **argv) {
 		for (i = 0; i < sizeof(windows)/sizeof(windows[0]); i++)
 			if (!strncasecmp(window,windows[i].type,strlen(window)))
 				conf.win = (WindowFunction *) &windows[i];
+	/* set fonts */
 	if (FT_Init_FreeType(&library)) die("unable to init freetype");
 	if ( FT_New_Face(library, font_path1, 0, &face) |
 			FT_Set_Pixel_Sizes(face, 0, conf.font_size) )
@@ -155,7 +162,7 @@ const char *configure(int argc, const char **argv) {
 		fprintf(stderr,"unable to load freetype font: %s\n",font_path2);
 	conf.font = cairo_ft_font_face_create_for_ft_face(face,0);
 	conf.bfont = cairo_ft_font_face_create_for_ft_face(bface,0);
-
+	/* prep 'help' function */
 	char *help_arg = strtok(help_cmd," ");
 	for (i = 0; help_arg; i++) {
 		conf.help_cmd = realloc(conf.help_cmd, (i+2) * sizeof(char *));
@@ -163,10 +170,12 @@ const char *configure(int argc, const char **argv) {
 		conf.help_cmd[i+1] = NULL;
 		help_arg = strtok(NULL," ");
 	}
+	/* return audio file name */
 	return fname;
 }
 
 int deconfig() {
+	/* clean up, free data */
 	int i;
 	for (i = 0; conf.help_cmd[i]; i++) free(conf.help_cmd[i]);
 	free(conf.help_cmd);

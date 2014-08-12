@@ -31,8 +31,6 @@ int die(const char *msg, ...) {
 	exit(1);
 }
 
-
-
 int main(int argc, const char **argv) {
 	const char *fname = configure(argc,argv);
 	Wave *wav = create_wave(fname);
