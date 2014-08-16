@@ -1,10 +1,17 @@
 ###FEX Distibion and packaging
 
-Currently only a PKGBUILD for archlinux is provided.
+For distributions equipped to build from git sources (e.g. Archlinux,
+Slackware), all packaging materials will be provided in subdirectories here.
 
-I will work on making suitable packaging materials for other
-distributions and/or will gladly accept pull requests from those who are
-more familiar with other distros.
+For other distrobutions, I will work on making suitable packaging materials
+available and/or will gladly accept pull requests from those who are more
+familiar with other distros.  The directories for such distros contain the
+materials I currently use to build packages for those targets.
+
+Binary and/or source packages will be available at the site below as they
+become available:
+
+http://behaviorenterprises.com/repo/
 
 ####Dependencies
 
@@ -18,11 +25,8 @@ The following packages and all their dependencies are required.
 + python2
 
 Dependencies for building fex include the above packages, along with any
-associated -dev packages for distros that use split packages (e.g.,
-ubuntoo), and the following:
-
-+ git
-+ latex2man
+associated -dev or -devel packages for distros that use split packages, and,
+of course, git to pull the source code.
 
 ####Building
 
