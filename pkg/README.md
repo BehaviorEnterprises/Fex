@@ -36,7 +36,6 @@ There is no need to configure:
 git clone http://github.com/TrilbyWhite/fex.git
 cd fex
 make
-make man
 ```
 
 ####Installation
