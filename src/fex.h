@@ -36,12 +36,9 @@
 #include <sndfile.h>
 #include <fftw3.h>
 #include <math.h>
-#include <ft2build.h>
-#include FT_FREETYPE_H
 #include <cairo.h>
 #include <cairo-xlib.h>
 #include <cairo-ft.h>
-
 #include <alsa/asoundlib.h>
 
 #define RGBA_SPECT	0x00

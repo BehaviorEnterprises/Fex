@@ -1,10 +1,10 @@
 summary: Frequency Excursion Calculator
 name: fex
-version: 2.135
+version: 2
 release: 1
 license: GPL3
 group: Applications/Science
-source: fex-2.135.tar.gz
+source: https://github.com/BehaviorEnterprises/Fex.git
 url: https://wiki.BehaviorEnterprises.com
 vendor: Behavior Enterprises
 packager: Jesse McClure jesse [at] mccluresk9 [dot] com

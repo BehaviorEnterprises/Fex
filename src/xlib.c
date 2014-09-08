@@ -124,7 +124,13 @@ void configurenotify(XEvent *ev) {
 	while (XCheckTypedEvent(dpy,ConfigureNotify, ev));
 	XConfigureEvent *e = &ev->xconfigure;
 	if (e->window == win) {
-		ww = e->width; wh = e->height;
+		/* The XServer is not storing the new/current values for width +
+		 * height.  These must be retrieved directly.
+		 * Is this an X11 bug? */
+		Window wig;
+		int ig;
+		XGetGeometry(dpy, win, &wig, &ig, &ig, &ww, &wh, &ig, &ig);
+		//ww = e->width; wh = e->height;
 		spectro_draw();
 		XSetWindowBackgroundPixmap(dpy, win, buf);
 		XClearWindow(dpy,win);
@@ -543,7 +549,6 @@ cairo_t *xlib_context() {
 int xlib_event_loop() {
 	XMapWindow(dpy, win);
 	XMapWindow(dpy, info->win);
-	XFlush(dpy);
 	XEvent ev;
 	while (running && !XNextEvent(dpy,&ev))
 		if (ev.type < LASTEvent && handler[ev.type])

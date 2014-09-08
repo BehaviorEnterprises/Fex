@@ -1,4 +1,5 @@
 #!/bin/bash
+
 ## comment any lines in main to skip that step ##
 main() {
 	startdir=$(pwd)
