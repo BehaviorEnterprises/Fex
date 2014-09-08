@@ -1,7 +1,7 @@
 PROG     =  fex
 VER      =  2.0
 CC       ?= gcc
-DEPS     =  x11 cairo fontconfig freetype2 fftw3 sndfile
+DEPS     =  x11 cairo fftw3 sndfile
 DEFS		=  -DPROGRAM_NAME=${PROG} -DPROGRAM_VER=${VER}
 CFLAGS   += $(shell pkg-config --cflags ${DEPS}) ${DEFS}
 LDLIBS   += $(shell pkg-config --libs ${DEPS}) -lm -lXpm
