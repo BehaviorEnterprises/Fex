@@ -38,8 +38,8 @@ FFT *create_fft(Wave *wav) {
 	double dt = (double)wav->samples / (double)(wav->rate * fft->ntime);
 	double f, t;
 	int i, j;
-	for (i = 0, f = 0.0; i < fft->nfreq; i++, f += df) fft->freq[i] = f; 
-	for (i = 0, t = 0.0; i < fft->ntime; i++, t += dt) fft->time[i] = t; 
+	for (i = 0, f = 0.0; i < fft->nfreq; i++, f += df) fft->freq[i] = f;
+	for (i = 0, t = 0.0; i < fft->ntime; i++, t += dt) fft->time[i] = t;
 	/* prepare fftw */
 	fftw_complex *in, * out;
 	fftw_plan p;

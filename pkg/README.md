@@ -1,7 +1,7 @@
 ###FEX Distibion and packaging
 
-For distributions equipped to build from git sources (e.g. Archlinux,
-Slackware), all packaging materials will be provided in subdirectories here.
+For distributions equipped to build from git sources (e.g. Archlinux),
+all packaging materials will be provided in subdirectories here.
 
 For other distrobutions, I will work on making suitable packaging materials
 available and/or will gladly accept pull requests from those who are more

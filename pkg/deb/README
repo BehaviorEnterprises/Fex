@@ -1,3 +1,6 @@
 
 makedeb is experimental - use at your own risk.
 
+The goal is to be able to build debian packages from an rpm spec file -
+or something very close to it.
+
