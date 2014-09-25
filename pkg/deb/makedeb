@@ -23,7 +23,9 @@ if [[ ! -f ${spec} ]]; then
 fi
 
 ## GET VALUES FROM SPEC FILE:
-pkgname=$(awk -F ': ' '/^name:/ { print $2; }' ${spec})
+pkgbase=$(awk -F ': ' '/^name:/ { print $2; }' ${spec})
+pkgname=$(basename ${spec})
+pkgname=${pkgname/\.spec/}
 git_url=$(awk -F ': ' '/^source:/ { print $2; }' ${spec})
 pkgver_base=$(awk -F ': ' '/^version:/ { print $2; }' ${spec})
 email=$(awk -F ': ' '/^packager:/ { print $2; }' ${spec})
@@ -50,7 +52,7 @@ else
 fi
 pkgver="${pkgver_base}.$(git rev-list --count HEAD)"
 make dist
-mv ${pkgname}*.tar.gz ${topdir}/${pkgname}/${pkgname}-${pkgver}.tar.gz
+mv ${pkgbase}*.tar.gz ${topdir}/${pkgname}/${pkgname}-${pkgver}.tar.gz
 
 ## BUILD FOLDER PREPARATION
 cd ${start_dir}

@@ -1,5 +1,5 @@
 summary: Frequency Excursion Calculator
-name: fex
+name: fex-calc
 version: 2
 release: 1
 license: GPL3
