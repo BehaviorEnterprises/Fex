@@ -8,7 +8,7 @@ source: https://github.com/BehaviorEnterprises/Fex.git
 url: https://wiki.BehaviorEnterprises.com
 vendor: Behavior Enterprises
 packager: Jesse McClure <jesse@mccluresk9.com>
-requires: libcairo, desktop-file-utils, libfftw3, libsndfile1, libxpm4, python, libasound2
+requires: libcairo2, desktop-file-utils, libfftw3-3, libsndfile1, libxpm4, python, libasound2
 buildrequires: libasound2-dev, libcairo2-dev, libfftw3-dev, gcc, libsndfile1-dev, libx11-dev, libxpm-dev, pkg-config
 prefix: /usr
 
