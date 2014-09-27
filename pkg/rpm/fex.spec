@@ -8,7 +8,7 @@ source: https://github.com/BehaviorEnterprises/Fex.git
 url: https://wiki.BehaviorEnterprises.com
 vendor: Behavior Enterprises
 packager: Jesse McClure jesse [at] mccluresk9 [dot] com
-requires: cairo, desktop-file-utils, fftw, libsndfile, libXpm, python
+requires: cairo, desktop-file-utils, fftw, libsndfile, libXpm, python, pygtk2, sox
 buildrequires: cairo-devel, fftw-devel, gcc, libsndfile-devel, libX11-devel, libXpm-devel, pkgconfig
 prefix: /usr
 

@@ -1,0 +1,7 @@
+makerpm uses rpmbuild and a slightly modified spec file (allowing a git
+source) to build an installable rpm file.
+
+Currently makerpm is being developed and tested on Fedora 20.
+
+TODO:
+	find dependency for asoundlib.h
