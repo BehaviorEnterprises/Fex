@@ -28,6 +28,50 @@
 	cairo_set_line_width(x, conf.col[n].w);						\
 }
 
+int create_spectro(FFT *fft, const char *fname) {
+	spect = (Spectro *) calloc(1, sizeof(Spectro));
+	/* names */
+	spect->fname = fname;
+	char *c = strrchr(spect->fname,'/');
+	if (c && (++c)) spect->name = strdup(c);
+	else spect->name = strdup(fname);
+	if ( (c=strrchr(spect->name,'.')) ) *c = '\0';
+	/* fft */
+	spect->fft = fft;
+	spect->fft_w = fft->ntime;
+	spect->fft_h = fft->nfreq;
+	/* set bounds */
+	int i;
+	for (i = 0; i < spect->fft->nfreq &&
+			spect->fft->freq[i] < conf.hipass; i++);
+	spect->fft_lo = spect->fft_y = i;
+	for (i++; i < spect->fft->nfreq &&
+			spect->fft->freq[i] < conf.lopass; i++);
+	spect->fft_hi = i;
+	spect->fft_h = i - spect->fft_y;
+	/* cairo_surfaces */
+	spectro_spec();
+	spectro_thresh();
+	spectro_points();
+	/* xlib */
+	create_xlib();
+	return 0;
+}
+
+int free_spectro() {
+	cairo_surface_destroy(spect->m_spec);
+	cairo_surface_destroy(spect->m_thresh);
+	cairo_surface_destroy(spect->s_points);
+	free_xlib();
+	free(spect->name);
+	free(spect);
+	return 0;
+}
+
+
+
+
+
 int img_draw() {
 	cairo_surface_t *img;
 	img = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, spect->fft_w*conf.scale, spect->fft_h*conf.scale * 4);
@@ -83,86 +127,6 @@ int spectro_draw() {
 	return 0;
 }
 
-int create_spectro(FFT *fft, const char *fname) {
-	spect = (Spectro *) calloc(1, sizeof(Spectro));
-	/* names */
-	spect->fname = fname;
-	char *c = strrchr(spect->fname,'/');
-	if (c && (++c)) spect->name = strdup(c);
-	else spect->name = strdup(fname);
-	if ( (c=strrchr(spect->name,'.')) ) *c = '\0';
-	/* fft */
-	spect->fft = fft;
-	spect->fft_w = fft->ntime;
-	spect->fft_h = fft->nfreq;
-	/* set bounds */
-	int i;
-	for (i = 0; i < spect->fft->nfreq &&
-			spect->fft->freq[i] < conf.hipass; i++);
-	spect->fft_lo = spect->fft_y = i;
-	for (i++; i < spect->fft->nfreq &&
-			spect->fft->freq[i] < conf.lopass; i++);
-	spect->fft_hi = i;
-	spect->fft_h = i - spect->fft_y;
-	/* cairo_surfaces */
-	spectro_spec();
-	spectro_thresh();
-	spectro_points();
-	/* xlib */
-	create_xlib();
-	return 0;
-}
-
-int free_spectro() {
-	cairo_surface_destroy(spect->m_spec);
-	cairo_surface_destroy(spect->m_thresh);
-	cairo_surface_destroy(spect->s_points);
-	free_xlib();
-	free(spect->name);
-	free(spect);
-	return 0;
-}
-
-int spectro_spec() {
-	if (spect->m_spec) cairo_surface_destroy(spect->m_spec);
-	if (spect->a_spec) free(spect->a_spec);
-	int i, j, stride;
-	stride = cairo_format_stride_for_width(CAIRO_FORMAT_A8, spect->fft_w);
-	spect->a_spec = (unsigned char *) calloc(stride,spect->fft_h);
-	unsigned char *a = NULL;
-	for (j = spect->fft_y; j < spect->fft_h + spect->fft_y; j++) {
-		a = spect->a_spec + (j - spect->fft_y) * stride;
-		for (i = spect->fft_x; i < spect->fft_w + spect->fft_x; i++, a++) {
-			*a = 255  - (unsigned char) 255 * (
-					( (spect->fft->amp[i][j] - conf.spect_floor) >= 0) ?
-						spect->fft->amp[i][j] / conf.spect_floor : 1);
-		}
-	}
-	spect->m_spec = cairo_image_surface_create_for_data(spect->a_spec,
-			CAIRO_FORMAT_A8, spect->fft_w, spect->fft_h, stride);
-	return 0;
-}
-
-int spectro_thresh() {
-	if (spect->m_thresh) cairo_surface_destroy(spect->m_thresh);
-	if (spect->a_thresh) free(spect->a_thresh);
-	int i, j, stride;
-	stride = cairo_format_stride_for_width(CAIRO_FORMAT_A8, spect->fft_w);
-	spect->a_thresh = (unsigned char *) calloc(stride, spect->fft_h);
-	unsigned char *a = NULL;
-	for (j = spect->fft_y; j < spect->fft_h + spect->fft_y; j++) {
-		a = spect->a_thresh + (j - spect->fft_y) * stride;
-		for (i = spect->fft_x; i < spect->fft_w + spect->fft_x; i++, a++) {
-			if (spect->fft->mask[i][j]) *a = 0;
-			else if (spect->fft->amp[i][j] > conf.thresh) *a = 255;
-			else *a = 0;
-		}
-	}
-	spect->m_thresh = cairo_image_surface_create_for_data(spect->a_thresh,
-			CAIRO_FORMAT_A8, spect->fft_w, spect->fft_h, stride);
-	return 0;
-}
-
 int spectro_points() {
 	if (spect->s_points) cairo_surface_destroy(spect->s_points);
 	spect->s_points = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
@@ -211,3 +175,44 @@ int spectro_points() {
 	cairo_destroy(l);
 	return 0;
 }
+
+int spectro_spec() {
+	if (spect->m_spec) cairo_surface_destroy(spect->m_spec);
+	if (spect->a_spec) free(spect->a_spec);
+	int i, j, stride;
+	stride = cairo_format_stride_for_width(CAIRO_FORMAT_A8, spect->fft_w);
+	spect->a_spec = (unsigned char *) calloc(stride,spect->fft_h);
+	unsigned char *a = NULL;
+	for (j = spect->fft_y; j < spect->fft_h + spect->fft_y; j++) {
+		a = spect->a_spec + (j - spect->fft_y) * stride;
+		for (i = spect->fft_x; i < spect->fft_w + spect->fft_x; i++, a++) {
+			*a = 255  - (unsigned char) 255 * (
+					( (spect->fft->amp[i][j] - conf.spect_floor) >= 0) ?
+						spect->fft->amp[i][j] / conf.spect_floor : 1);
+		}
+	}
+	spect->m_spec = cairo_image_surface_create_for_data(spect->a_spec,
+			CAIRO_FORMAT_A8, spect->fft_w, spect->fft_h, stride);
+	return 0;
+}
+
+int spectro_thresh() {
+	if (spect->m_thresh) cairo_surface_destroy(spect->m_thresh);
+	if (spect->a_thresh) free(spect->a_thresh);
+	int i, j, stride;
+	stride = cairo_format_stride_for_width(CAIRO_FORMAT_A8, spect->fft_w);
+	spect->a_thresh = (unsigned char *) calloc(stride, spect->fft_h);
+	unsigned char *a = NULL;
+	for (j = spect->fft_y; j < spect->fft_h + spect->fft_y; j++) {
+		a = spect->a_thresh + (j - spect->fft_y) * stride;
+		for (i = spect->fft_x; i < spect->fft_w + spect->fft_x; i++, a++) {
+			if (spect->fft->mask[i][j]) *a = 0;
+			else if (spect->fft->amp[i][j] > conf.thresh) *a = 255;
+			else *a = 0;
+		}
+	}
+	spect->m_thresh = cairo_image_surface_create_for_data(spect->a_thresh,
+			CAIRO_FORMAT_A8, spect->fft_w, spect->fft_h, stride);
+	return 0;
+}
+

@@ -51,5 +51,6 @@ int main(int argc, const char **argv) {
 
 	free_spectro();
 	free_fft(&fft);
+	deconfigure();
 	return 0;
 }

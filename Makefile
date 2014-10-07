@@ -13,7 +13,7 @@ VPATH    =  src:doc
 
 ${PROG}: ${MODULES:%=%.o}
 
-xlib.o: xlib.c xlib_toolwin.c ${HEADERS}
+xlib.o: xlib.c xlib_toolwin.c xlib_events.c xlib_actions.c ${HEADERS}
 
 config.o: config.c config.h ${HEADERS}
 

@@ -167,7 +167,7 @@ const char *configure(int argc, const char **argv) {
 	return fname;
 }
 
-int deconfig() {
+int deconfigure() {
 	/* clean up, free data */
 	int i;
 	for (i = 0; conf.help_cmd[i]; i++) free(conf.help_cmd[i]);

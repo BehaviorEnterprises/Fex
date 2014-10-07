@@ -108,16 +108,13 @@ typedef struct Config {
 extern int die(const char *, ...);
 /* config.c */
 extern const char *configure(int, const char **);
+extern int deconfigure();
 /* fft.c */
 extern FFT *create_fft(Wave *);
 extern int free_fft(FFT **);
 /* spectro.c */
 extern int create_spectro(FFT *, const char *);
 extern int free_spectro();
-extern int spectro_spec();
-extern int spectro_thresh();
-extern int spectro_points();
-extern int spectro_draw();
 /* wave.c */
 extern Wave *create_wave(const char *);
 extern int free_wave(Wave **);
