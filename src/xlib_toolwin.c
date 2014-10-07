@@ -34,7 +34,7 @@ struct ToolWin {
 };
 
 static int toolwin_backing(ToolWin *);
-static int toolwin_button(ToolWin *, XButtonEvent *);
+//static int toolwin_button(ToolWin *, XButtonEvent *);
 static int toolwin_create();
 static int toolwin_destroy();
 static int toolwin_draw(ToolWin *);
@@ -149,18 +149,20 @@ static int info_draw(ToolWin *tw) {
 }
 
 static int info_button(ToolWin *tw, XButtonEvent *e) {
-	if (e->y < 170 || e->y > 190) return;
-	if (e->x < 10 || e->x > tw->w - 10) return;
+	if (e->y < 170 || e->y > 190) return 0;
+	if (e->x < 10 || e->x > tw->w - 10) return 0;
 	if (e->x < tw->w / 2.0 - 5) { /* erase button */
 		if (e->button == 1) {
-			mode = MODE_ERASE & (mode ^= MODE_ERASE);
+			//mode = MODE_ERASE & (mode ^= MODE_ERASE);
+			mode = (mode & MODE_ERASE ? 0 : MODE_ERASE);
 			eraser_cursor(0,0);
 			tw->draw(tw);
 		}
 	}
 	else { /* crop button */
 		if (e->button == 1) {
-			mode = MODE_CROP & (mode ^= MODE_CROP);
+			//mode = MODE_CROP & (mode ^= MODE_CROP);
+			mode = (mode & MODE_CROP ? 0 : MODE_CROP);
 			if (!(mode & MODE_CROP)) XDefineCursor(dpy, win, None);
 			else XDefineCursor(dpy, win, XCreateFontCursor(dpy, 34));
 			tw->draw(tw);
@@ -181,6 +183,7 @@ static int info_button(ToolWin *tw, XButtonEvent *e) {
 			tw->draw(tw);
 		}
 	}
+	return 0;
 }
 
 int toolwin_backing(ToolWin *tw) {
@@ -190,9 +193,10 @@ int toolwin_backing(ToolWin *tw) {
 	return 0;
 }
 
-int toolwin_button(ToolWin *tw, XButtonEvent *e) {
-	XRaiseWindow(dpy, tw->win);
-}
+//int toolwin_button(ToolWin *tw, XButtonEvent *e) {
+//	XRaiseWindow(dpy, tw->win);
+//	return 0;
+//}
 
 int toolwin_create() {
 	info = (ToolWin *) calloc(1, sizeof(ToolWin));
@@ -217,6 +221,7 @@ int toolwin_destroy() {
 	//toolwin_win_destroy(help);
 	free(info);
 	//free(help);
+	return 0;
 }
 
 int toolwin_draw(ToolWin *tw) {
@@ -255,5 +260,6 @@ int toolwin_win_destroy(ToolWin *tw) {
 	cairo_destroy(tw->ctx);
 	XDestroyWindow(dpy, tw->win);
 	XFreePixmap(dpy, tw->buf);
+	return 0;
 }
 

@@ -62,6 +62,7 @@ int img_draw() {
 	cairo_surface_write_to_png(img,"/tmp/img3.png");
 	cairo_destroy(ctx);
 	cairo_surface_destroy(img);
+	return 0;
 }
 
 int spectro_draw() {
@@ -79,6 +80,7 @@ int spectro_draw() {
 		cairo_paint(c);
 	}
 	cairo_destroy(c);
+	return 0;
 }
 
 int create_spectro(FFT *fft, const char *fname) {

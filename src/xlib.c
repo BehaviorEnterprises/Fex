@@ -29,6 +29,8 @@
 #define EVENT_MASK	ExposureMask | ButtonPressMask | KeyPressMask | \
 							StructureNotifyMask
 
+extern int img_draw();
+
 static void buttonpress(XEvent *);
 static void clientmessage(XEvent *);
 static void configurenotify(XEvent *);
@@ -48,12 +50,13 @@ static int threshold(double);
 static int zoom(double);
 
 static Display *dpy;
-static int scr, ww, wh, mx, my;
+static int scr;
+static unsigned int ww, wh, mx, my;
 static GC gc;
 static Window root, win;
-static Pixmap buf, ibuf, sbuf;
+static Pixmap buf; //, ibuf, sbuf;
 static Atom WM_DELETE_WINDOW;
-static cairo_t *ictx, *sctx;
+//static cairo_t *ictx, *sctx;
 static Bool running = True;
 static double xsc = 1.0, ysc = 1.0, xoff = 0.0, yoff = 0.0;
 static int mode = 0, ew = 31, eh = 64;
@@ -129,7 +132,8 @@ void configurenotify(XEvent *ev) {
 		 * Is this an X11 bug? */
 		Window wig;
 		int ig;
-		XGetGeometry(dpy, win, &wig, &ig, &ig, &ww, &wh, &ig, &ig);
+		unsigned int uig;
+		XGetGeometry(dpy, win, &wig, &ig, &ig, &ww, &wh, &uig, &uig);
 		//ww = e->width; wh = e->height;
 		spectro_draw();
 		XSetWindowBackgroundPixmap(dpy, win, buf);
@@ -202,12 +206,14 @@ void keypress(XEvent *ev) {
 		XFlush(dpy);
 	}
 	else if (sym == XK_e) {
-		mode = MODE_ERASE & (mode ^= MODE_ERASE);
+		//mode = MODE_ERASE & (mode ^= MODE_ERASE);
+		mode = (mode & MODE_ERASE ? 0 : MODE_ERASE);
 		eraser_cursor(0,0);
 		info->draw(info);
 	}
 	else if (sym == XK_c) {
-		mode = MODE_CROP & (mode ^= MODE_CROP);
+		//mode = MODE_CROP & (mode ^= MODE_CROP);
+		mode = (mode & MODE_CROP ? 0 : MODE_CROP);
 		if (!(mode & MODE_CROP)) XDefineCursor(dpy, win, None);
 		else XDefineCursor(dpy, win, XCreateFontCursor(dpy, 34));
 		info->draw(info);
@@ -228,7 +234,7 @@ void keypress(XEvent *ev) {
 }
 
 void motionnotify(XEvent *ev) {
-	static int px, py;
+	//static int px, py;
 	int x = ev->xmotion.x, y = ev->xmotion.y;
 	mx = spect->fft_w * x / (xsc * ww) - 1.0 * xoff + spect->fft_x;
 	my = spect->fft_h * (1.0 - y / (ysc * wh)) - 1.0 * yoff + spect->fft_y;
@@ -336,6 +342,7 @@ int erase(int x, int y) {
 		while(XCheckMaskEvent(dpy, PointerMotionMask, &e));
 	}
 	XUngrabPointer(dpy, CurrentTime);
+	return 0;
 }
 
 int eraser_cursor(int w, int h) {
@@ -345,7 +352,7 @@ int eraser_cursor(int w, int h) {
 	if ( (eh+=h) < 3 ) eh = 3;
 	if ( ew > ww/4 ) ew = ww / 4;
 	if ( eh > wh/2 ) eh = wh / 2;
-	int i, j, stride = ew/ 8 + 1;
+	int i, stride = ew/ 8 + 1;
 	char data[stride * eh];
 	char mask[stride * eh];
 	XColor bg, fg;
@@ -361,6 +368,7 @@ int eraser_cursor(int w, int h) {
 	XFreePixmap(dpy, cd);
 	XFreePixmap(dpy, cm);
 	XFlush(dpy);
+	return 0;
 }
 
 int move(double x, double y) {
@@ -375,6 +383,7 @@ int move(double x, double y) {
 		spectro_draw();
 		XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
 	}
+	return 0;
 }
 
 int play(float speed) {
@@ -419,6 +428,7 @@ int play(float speed) {
 	}
 	XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
 	XFlush(dpy);
+	return 0;
 }
 
 int pt_line(double p, double l) {
@@ -429,6 +439,7 @@ int pt_line(double p, double l) {
 	spectro_points();
 	spectro_draw();
 	XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
+	return 0;
 }
 
 int screenshot() {
@@ -439,6 +450,7 @@ int screenshot() {
 			DefaultVisual(dpy,scr), ww, wh);
 	cairo_surface_write_to_png(t, fname);
 	cairo_surface_destroy(t);
+	return 0;
 }
 
 int sp_floor(double f) {
@@ -447,6 +459,7 @@ int sp_floor(double f) {
 	spectro_draw();
 	XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
 	if (info->vis) info->draw(info);
+	return 0;
 }
 
 int threshold(double f) {
@@ -456,6 +469,7 @@ int threshold(double f) {
 	spectro_draw();
 	XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
 	if (info->vis) info->draw(info);
+	return 0;
 }
 
 int zoom(double f) {
@@ -468,6 +482,7 @@ int zoom(double f) {
 	if (f < 0) move(0,0); /* check offsets for bounds */
 	spectro_draw();
 	XCopyArea(dpy, buf, win, gc, 0, 0, ww, wh, 0, 0);
+	return 0;
 }
 
 int create_xlib() {
@@ -532,6 +547,7 @@ int free_xlib() {
 	toolwin_destroy();
 	XFlush(dpy);
 	XCloseDisplay(dpy);
+	return 0;
 }
 
 cairo_t *xlib_context() {
@@ -553,6 +569,7 @@ int xlib_event_loop() {
 	while (running && !XNextEvent(dpy,&ev))
 		if (ev.type < LASTEvent && handler[ev.type])
 			handler[ev.type](&ev);
+	return 0;
 }
 
 

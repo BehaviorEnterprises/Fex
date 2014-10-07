@@ -6,12 +6,24 @@
 
 \end{Name}
 
+\section{Synopsis}
+
+\Prog{fex}
+	[\Opt{-l}|\Opt{--long}]
+	[\Opt{-v}|\Opt{--version}]
+	[\Opt{-v}|\Opt{--version}]
+	\Arg{<wave file>}
+
+\Prog{fex-gtk}
+	[\Opt{-l}|\Opt{--long}]
+	\Arg{<wave file>}
+	[\Arg{<wave file>} ...]
+
+
 \section{Description}
 
 \Prog{Fex} is a bioacoustic analysis tool for calculating the frequency
 excursion of an audio recording of bird songs or other sound waves.
-
-\section{Fex-gtk}
 
 \Prog{Fex-gtk} is a wrapper script for fex that facilitates batch
 processing of large numbers of wave files.  \Prog{Fex-gtk} can be
@@ -23,6 +35,19 @@ file or displayed in a dialog window upon completion.
 \Prog{Fex-gtk} is also the executable target of \File{fex.desktop} to
 allow for drag-and-drop operation of \Prog{fex}.  The desktop file can
 accept any number of wave files as a drop target.
+
+\section{Options}
+
+\begin{description}
+\item[\Opt{-l}|\Opt{--long}]
+	Provide three column output specifying the path length, path
+	duration, and frequency excursion (calculated as path length over
+	duration).  Default is to provide only the frequency excursion value.
+\item[\Opt{-h}|\Opt{--help}]
+	Print help message and exit.
+\item[\Opt{-v}|\Opt{--version}]
+	Print version information and exit.
+\end{description}
 
 \section{Configuration}
 \Prog{Fex} is configured via a runtime configuration file read from one

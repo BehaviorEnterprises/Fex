@@ -1,5 +1,5 @@
 '\" t
-.\" Manual page created with latex2man on Wed Jul  2 13:29:59 EDT 2014
+.\" Manual page created with latex2man on Wed Oct  1 12:46:47 EDT 2014
 .\" NOTE: This file is generated, DO NOT EDIT.
 .de Vb
 .ft CW
@@ -10,12 +10,27 @@
 
 .fi
 ..
-.TH "FEX" "1" "02 July 2014" "Frequency Excusion " "Frequency Excusion "
+.TH "FEX" "1" "01 October 2014" "Frequency Excusion " "Frequency Excusion "
 .SH NAME
 
 .PP
 Fex
 \- The frequency excursion calculator 
+.PP
+.SH SYNOPSIS
+
+.PP
+fex
+[\fB\-l\fP|\fB\-\-long\fP]
+[\fB\-v\fP|\fB\-\-version\fP]
+[\fB\-v\fP|\fB\-\-version\fP]
+\fI<wave file>\fP
+.PP
+fex\-gtk
+[\fB\-l\fP|\fB\-\-long\fP]
+\fI<wave file>\fP
+[\fI<wave file>\fP
+\&.\&.\&.] 
 .PP
 .SH DESCRIPTION
 
@@ -23,9 +38,6 @@ Fex
 Fex
 is a bioacoustic analysis tool for calculating the frequency 
 excursion of an audio recording of bird songs or other sound waves. 
-.PP
-.SH FEX\-GTK
-
 .PP
 Fex\-gtk
 is a wrapper script for fex that facilitates batch 
@@ -43,6 +55,21 @@ to
 allow for drag\-and\-drop operation of fex\&.
 The desktop file can 
 accept any number of wave files as a drop target. 
+.PP
+.SH OPTIONS
+
+.PP
+.TP
+\fB\-l\fP|\fB\-\-long\fP
+ Provide three column output specifying the path length, path 
+duration, and frequency excursion (calculated as path length over 
+duration). Default is to provide only the frequency excursion value. 
+.TP
+\fB\-h\fP|\fB\-\-help\fP
+ Print help message and exit. 
+.TP
+\fB\-v\fP|\fB\-\-version\fP
+ Print version information and exit. 
 .PP
 .SH CONFIGURATION
 

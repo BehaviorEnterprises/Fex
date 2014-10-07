@@ -7,4 +7,4 @@ Terminal=false
 Type=Application
 Categories=Science
 Icon=/usr/share/pixmaps/fex.png
-MimeType=audio/vnd.wav
+MimeType=audio/*

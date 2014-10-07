@@ -32,6 +32,7 @@
 #include <X11/XKBlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
+#include <X11/xpm.h>
 #include <string.h>
 #include <sndfile.h>
 #include <fftw3.h>
@@ -113,6 +114,10 @@ extern int free_fft(FFT **);
 /* spectro.c */
 extern int create_spectro(FFT *, const char *);
 extern int free_spectro();
+extern int spectro_spec();
+extern int spectro_thresh();
+extern int spectro_points();
+extern int spectro_draw();
 /* wave.c */
 extern Wave *create_wave(const char *);
 extern int free_wave(Wave **);

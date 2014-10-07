@@ -52,7 +52,7 @@ Wave *create_wave(const char *fname) {
 	if (n != w->samples)
 		fprintf(stderr,"Error reading \"%s\"\n\t"
 				"\t%d samples read of\n\t%d reported size\n",
-				fname, n, w->samples);
+				fname, (int) n, w->samples);
 	sf_close(wfile);
 	return w;
 }
@@ -61,4 +61,5 @@ int free_wave(Wave **wp) {
 	Wave *w = *wp;
 	free(w->d);
 	free(w);
+	return 0;
 }
