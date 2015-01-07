@@ -227,6 +227,32 @@ int screenshot() {
 	return 0;
 }
 
+int series_export() {
+	double *dat = malloc(spect->fft_w * sizeof(double));
+	int i, j, f;
+	/* find the peak frequency relative to max for each time bin */
+	for (i = spect->fft_x; i < spect->fft_w + spect->fft_x; ++i) {
+		f = 0;
+		for (j = spect->fft_y; j < spect->fft_h+spect->fft_y; ++j) {
+				if (spect->fft->mask[i][j]) continue;
+				if (spect->fft->amp[i][j] > spect->fft->amp[i][f] || !f)
+					f = j;
+		}
+		if (f > 0 && spect->fft->amp[i][f] > conf.thresh)
+			dat[i - spect->fft_x] = spect->fft->freq[f];
+		else
+			dat[i - spect->fft_x] = 0.0;
+	}
+	char *fname = malloc(strlen(spect->name) + 6);
+	sprintf(fname, "%s.freq", spect->name);
+	f = open(fname, O_WRONLY | O_CREAT, 0644);
+	write(f, dat, spect->fft_w * sizeof(double));
+	close(f);
+	free(fname);
+	free(dat);
+	return 0;
+}
+
 int sp_floor(double f) {
 	conf.spect_floor += f;
 	spectro_spec();

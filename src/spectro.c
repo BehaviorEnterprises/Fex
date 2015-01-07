@@ -68,10 +68,6 @@ int free_spectro() {
 	return 0;
 }
 
-
-
-
-
 int img_draw() {
 	cairo_surface_t *img;
 	img = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, spect->fft_w*conf.scale, spect->fft_h*conf.scale * 4);
@@ -130,7 +126,6 @@ int spectro_draw() {
 int spectro_points() {
 	if (spect->s_points) cairo_surface_destroy(spect->s_points);
 	spect->s_points = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
-			//spect->fft_w, spect->fft_h);
 			spect->fft_w * conf.scale, spect->fft_h * conf.scale);
 	cairo_t *p = cairo_create(spect->s_points);
 	cairo_t *l = cairo_create(spect->s_points);
