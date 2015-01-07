@@ -147,8 +147,12 @@ void keypress(XEvent *ev) {
 	else if (sym == XK_h || sym == XK_Left) move(0.02,0);
 	else if (sym == XK_l || sym == XK_Right) move(-0.02,0);
 	else if (sym == XK_F1) {
-		if (fork() == 0)
+		if (fork() == 0) {
+			close(ConnectionNumber(dpy));
+			fclose(stderr);
+			fclose(stdout);
 			execvp(conf.help_cmd[0],(char * const *)conf.help_cmd);
+		}
 	}
 	else if (sym == XK_F2) {
 		if ( (info->vis = !info->vis) ) XMapRaised(dpy,info->win);
