@@ -228,6 +228,7 @@ int screenshot() {
 }
 
 int series_export() {
+	static int n = 0;
 	double *dat = malloc(spect->fft_w * sizeof(double));
 	int i, j, f;
 	/* find the peak frequency relative to max for each time bin */
@@ -243,8 +244,8 @@ int series_export() {
 		else
 			dat[i - spect->fft_x] = 0.0;
 	}
-	char *fname = malloc(strlen(spect->name) + 6);
-	sprintf(fname, "%s.freq", spect->name);
+	char *fname = malloc(strlen(spect->name) + 10);
+	sprintf(fname, "%s%d.freq", spect->name, n++);
 	f = open(fname, O_WRONLY | O_CREAT, 0644);
 	write(f, dat, spect->fft_w * sizeof(double));
 	close(f);
