@@ -1,121 +1,112 @@
 /**********************************************************************\
-* FEX - The Frequency Excursion Calculator
-*
-* Author: Jesse McClure, copyright 2013-2014
-* License: GPL3
-*
-*    This program is free software: you can redistribute it and/or
-*    modify it under the terms of the GNU General Public License as
-*    published by the Free Software Foundation, either version 3 of the
-*    License, or (at your option) any later version.
-*
-*    This program is distributed in the hope that it will be useful, but
-*    WITHOUT ANY WARRANTY; without even the implied warranty of
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-*    General Public License for more details.
-*
-*    You should have received a copy of the GNU General Public License
-*    along with this program.  If not, see
-*    <http://www.gnu.org/licenses/>.
-*
+* FFT.C
+* Part of FEX, see FEX.C for complete license information
+* Author: Jesse McClure, copyright 2013-2015
+* License; GPL3
 \**********************************************************************/
 
+#include <math.h>
+#include <fftw3.h>
 #include "fex.h"
+#include "fex_struct.h"
 
-#define FFTW_FLAGS	FFTW_FORWARD, FFTW_ESTIMATE
-FFT *create_fft(Wave *wav) {
-	/* allocate memory */
-	FFT *fft = (FFT *) calloc(1,sizeof(FFT));
-	fft->nfreq = conf.winlen/2 + 1;
-	fft->ntime = wav->samples/conf.hop;
-	fft->amp = (double **) calloc(fft->ntime, sizeof(double *));
-	fft->time = (double *) calloc(fft->ntime, sizeof(double));
-	fft->freq = (double *) calloc(fft->nfreq, sizeof(double));
-	fft->mask = (char **) calloc(fft->ntime, sizeof(char *));
-	/* calculate step sizes and fill time/freq arrays */
-	double nyquist = (double) wav->rate / 2000.0;
-	double df = nyquist / fft->nfreq;
-	double dt = (double)wav->samples / (double)(wav->rate * fft->ntime);
-	double f, t;
-	int i, j;
-	for (i = 0, f = 0.0; i < fft->nfreq; i++, f += df) fft->freq[i] = f;
-	for (i = 0, t = 0.0; i < fft->ntime; i++, t += dt) fft->time[i] = t;
-	/* prepare fftw */
-	fftw_complex *in, * out;
-	fftw_plan p;
-	in = (fftw_complex *)fftw_malloc(conf.winlen * sizeof(fftw_complex));
-	out = (fftw_complex *)fftw_malloc(conf.winlen * sizeof(fftw_complex));
-	p = fftw_plan_dft_1d(conf.winlen, in, out, FFTW_FLAGS);
-	/* create windowing function */
-	double window[conf.winlen];
-	double *a = conf.win->a;
-	double wl = conf.winlen;
-	for (i = 0; i < conf.winlen; i++)
-		window[i] = a[0] - a[1] * cos(2 * M_PI * (i / (wl - 1.0))) +
-				a[2] * cos(2 * M_PI * (i / (wl - 1.0))) -
-				a[3] * cos(2 * M_PI * (i / (wl - 1.0)));
+// TODO configurable window_function
+static double window_function[4] = { 0.5, 0.5, 0, 0 };
+
+
+#define MatrixAmp(mat,nf,t,f)		(mat)[nf * t + f]
+fex_t create_fft(FEX *fex) {
+	if (!fex) return FexNullAccess;
+	/* allocate space */
+	fex->fft.nfreq = fex->conf.winlen / 2 + 0.5;
+	//fex->fft.ntime = (fex->wave.samples - fex->conf.winlen) / fex->conf.hop;
+	fex->fft.ntime = fex->wave.samples / fex->conf.hop;
+	fex->fft.freq = malloc(fex->fft.nfreq * sizeof(double));
+	fex->fft.time = malloc(fex->fft.ntime * sizeof(double));
+	fex->fft.amp = malloc(fex->fft.nfreq * fex->fft.ntime * sizeof(double));
+	/* fill time and freq arrays */
+	double nyquist = (double) fex->wave.rate / 2000.0;
+	double dt = fex->wave.samples / (double) (fex->wave.rate * fex->fft.ntime);
+	double df = nyquist / fex->fft.nfreq;
+	int i;
+	fex->fft.time[0] = fex->fft.freq[0] = 0.0;
+	for (i = 1; i < fex->fft.ntime; ++i)
+		fex->fft.time[i] = fex->fft.time[i-1] + dt;
+	for (i = 1; i < fex->fft.nfreq; ++i)
+		fex->fft.freq[i] = fex->fft.freq[i-1] + df;
+	/* preare fftw */
+	fftw_complex *in, *out;
+	fftw_plan plan;
+	in = (fftw_complex *) fftw_malloc(fex->conf.winlen * sizeof(fftw_complex));
+	out = (fftw_complex *) fftw_malloc(fex->conf.winlen * sizeof(fftw_complex));
+	plan = fftw_plan_dft_1d(fex->conf.winlen, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+	/* windowing function */
+	double *window = malloc(fex->conf.winlen * sizeof(double));
+	int t, f, pos;
+	for (t = 0; t < fex->conf.winlen; ++t)
+		window[t] = window_function[0] -		// TODO - FIXME?
+				window_function[1] * cos(2 * M_PI * t / (fex->conf.winlen - 1.0)) +
+				window_function[2] * cos(2 * M_PI * t / (fex->conf.winlen - 1.0)) -
+				window_function[3] * cos(2 * M_PI * t / (fex->conf.winlen - 1.0));
 	/* loop over signal */
-	int pos;
-	for (pos = 0, j = 0; pos < wav->samples; pos += conf.hop, j++) {
-		fft->amp[j] = (double *) malloc(fft->nfreq * sizeof(double));
-		fft->mask[j] = (char *) calloc(fft->nfreq, sizeof(char));
-		/* copy windowed chunk to dat */
-		for (i = 0; i < conf.winlen; i++) {
-			if (pos + i < wav->samples) {
-				in[i][0] = wav->d[pos + i] * window[i];
-				in[i][1] = 0.0;
-			}
-			else {
+	for (pos = 0, t = 0; pos < fex->wave.samples; pos += fex->conf.hop, ++t) {
+		/* copy windowed chunk to in */
+		for (i = 0; i < fex->conf.winlen; ++i) {
+			if (pos + i < fex->wave.samples)
+				in[i][0] = fex->wave.data[pos + i] * window[i];
+			else
 				in[i][0] = 0.0;
-				in[i][1] = 0.0;
-				goto doublebreak;
-			}
+			in[i][1] = 0.0;
 		}
-		/* calculate fft & fill amp matrix */
-		fftw_execute(p);
-		for (i = 0; i < fft->nfreq; i++)
-			fft->amp[j][i] = sqrt(out[i][0] * out[i][0] +
-					out[i][1] * out[i][1]);
+		/* calculate fft and fill amp */
+		fftw_execute(plan);
+		for (f = 0; f < fex->fft.nfreq; ++f)
+			fftAmp(fex,t,f) = sqrt(out[f][0] * out[f][0] + out[f][1] * out[f][1]);
 	}
-	doublebreak:
-	fftw_destroy_plan(p);
+	/* zero unused bins */
+	for (; t < fex->fft.ntime; ++t) for (f = 0; f < fex->fft.nfreq; ++f)
+		fftAmp(fex,t,f) = 0;
+	/* drestroy and free data */
+	fftw_destroy_plan(plan);
 	fftw_free(out);
 	fftw_free(in);
-	/* fill and zero unused bins */
-	for ( ; j < fft->ntime; j++) {
-		fft->amp[j] = (double *) calloc(fft->nfreq, sizeof(double));
-		fft->mask[j] = (char *) calloc(fft->nfreq, sizeof(char));
-	}
-	/* band pass filter */
-	for (i = 0; i < fft->ntime; i++) {
-		for (j = 0; j < fft->nfreq && fft->freq[j] < conf.hipass; j++)
-			fft->amp[i][j] = 0;
-		for (j = fft->nfreq - 1; fft->freq[j] > conf.lopass; j--)
-			fft->amp[i][j] = 0;
-	}
-	/* normalize, log transform, and scale to dB */
-	fft->max = fft->min = 0.0;
-	for (i = 0; i < fft->ntime; i++) for (j = 0; j < fft->nfreq; j++)
-		if (fft->amp[i][j] > fft->max) fft->max = fft->amp[i][j];
-	for (i = 0; i < fft->ntime; i++) for (j = 0; j < fft->nfreq; j++) {
-		fft->amp[i][j] = 10.0 * log10(fft->amp[i][j] / fft->max);
-		if (fft->amp[i][j] < fft->min && fft->amp[i][j] > -900)
-			fft->min = fft->amp[i][j];
-	}
-	fft->max = 0.0;
-	return fft;
+	free(window);
+	/* psuedo bandpass filter */
+	int f_zero, f_count = 0;
+	for (f = 0; fex->fft.freq[f] < fex->conf.lopass; ++f);
+	f_zero = f;
+	for (; fex->fft.freq[f] <= fex->conf.hipass; ++f) f_count++;
+	for (f = 0; f < f_count; ++f) fex->fft.freq[f] = fex->fft.freq[f+f_zero];
+	fex->fft.freq = realloc(fex->fft.freq, f_count * sizeof(double));
+
+	double *new_amp = malloc(fex->fft.ntime * f_count * sizeof(double));
+	for (t = 0; t < fex->fft.ntime; ++t) for (f = 0; f < f_count; ++f)
+		new_amp[f_count * t + f] = fex->fft.amp[fex->fft.nfreq * t + f + f_zero];
+	fex->fft.nfreq = f_count;
+	free(fex->fft.amp);
+	fex->fft.amp = new_amp;
+
+	/* normalize, log transform and scale to dB */
+	double max = 0.0;
+	for (t = 0; t < fex->fft.ntime; ++t) for (f = 0; f < fex->fft.nfreq; ++f)
+		if (fftAmp(fex,t,f) > max) max = fftAmp(fex,t,f);
+	for (t = 0; t < fex->fft.ntime; ++t) for (f = 0; f < fex->fft.nfreq; ++f)
+		fftAmp(fex,t,f) = 10.0 * log10(fftAmp(fex,t,f) / max);
 }
 
-int free_fft(FFT **fftp) {
-	FFT *fft = *fftp;
-	int i;
-	for (i = 0; i < fft->ntime; i++) {
-		free(fft->amp[i]);
-		free(fft->mask[i]);
-	}
-	//free(fft->amp);
-	//free(fft->time);
-	free(fft->freq);
-	free(fft);
-	return 0;
+
+fex_t destroy_fft(FEX *fex) {
+	if (!fex) return FexNullAccess;
+	fex_t ret = FexSuccess;
+	if (!fex->fft.amp) ret = FexNullMember;
+	free(fex->fft.amp);
+	fex->fft.amp = NULL;
+	if (!fex->fft.time) ret = FexNullMember;
+	free(fex->fft.time);
+	fex->fft.time = NULL;
+	if (!fex->fft.freq) ret = FexNullMember;
+	free(fex->fft.freq);
+	fex->fft.freq = NULL;
+	return ret;
 }
+

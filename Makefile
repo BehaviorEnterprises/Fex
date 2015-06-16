@@ -1,49 +1,37 @@
-PROG     =  fex
-VER      =  2.0
-CC       ?= gcc
-DEPS     =  x11 cairo fftw3 sndfile
-DEFS		=  -DPROGRAM_NAME=${PROG} -DPROGRAM_VER=${VER}
-CFLAGS   += $(shell pkg-config --cflags ${DEPS}) ${DEFS}
-LDLIBS   += $(shell pkg-config --libs ${DEPS}) -lm -lXpm
-PREFIX   ?= /usr
-MODULES  =  config fex fft spectro wave xlib
-HEADERS  =  fex.h
-MANPAGES =  fex.1 fex-help.1
-VPATH    =  src:doc
+
+
+PROG      =  glFex
+VER       =  3.0a
+CC       ?=  gcc
+
+ifeq ($(OS),win)
+# fftw3 and sndfile??
+DEFS     += -D_WIN32_
+CFLAGS   += -I"C:\Program Files\Common Files\MinGW\GLUT\include"
+LDLIBS   += -L"C:\Program Files\Common Files\MinGW\GLUT\lib" -lglut32 -lopengl32 -Wl,--subsystem,windows
+endif
+ifeq ($(OS),linux)
+DEPS      =  fftw3 freeglut gl sndfile
+CFLAGS   +=  $(shell pkg-config --cflags ${DEPS})
+LDLIBS   +=  $(shell pkg-config --libs ${DEPS}) -lm
+PREFIX   ?=  /usr
+endif
+
+MODULES   =  config fex fft wave
+HEADERS   =  fex.h fex_struct.h
+MANPAGES  =  fex.1
+VPATH     =  src:doc
 
 ${PROG}: ${MODULES:%=%.o}
 
-xlib.o: xlib.c xlib_toolwin.c xlib_events.c xlib_actions.c ${HEADERS}
-
-config.o: config.c config.h ${HEADERS}
+glFex.o: glFex.c fex.h
 
 %.o: %.c ${HEADERS}
 
-install: ${PROG}
-	@install -Dm755 ${PROG} ${DESTDIR}${PREFIX}/bin/${PROG}
-	@install -Dm755 src/${PROG}-gtk ${DESTDIR}${PREFIX}/bin/${PROG}-gtk
-	@install -Dm644 doc/${PROG}.1 ${DESTDIR}${PREFIX}/share/man/man1/${PROG}.1
-	@install -Dm644 doc/${PROG}-help.1 ${DESTDIR}${PREFIX}/share/man/man1/${PROG}-help.1
-	@mkdir -p ${DESTDIR}${PREFIX}/share/${PROG}
-	@install -Dm644 share/config ${DESTDIR}${PREFIX}/share/${PROG}/config
-	@install -Dm644 share/icon.png ${DESTDIR}${PREFIX}/share/pixmaps/${PROG}.png
-	@install -Dm644 share/${PROG}.desktop ${DESTDIR}${PREFIX}/share/applications/${PROG}.desktop
-
-${MANPAGES}: fex%.1: fex%-1.tex
-	@latex2man $< doc/$@
-
-man: ${MANPAGES}
-
 clean:
-	@rm -f ${MODULES:%=%.o}
+	@rm -f *.o
 
 distclean: clean
-	@rm -f ${PROG} ${PROG}-${VER}.tar.gz
+	@rm -f glFex glFex.exe
 
-moreclean: distclean
-	@cd doc && rm -f ${MANPAGES}
-
-dist: distclean
-	@tar -czf ${PROG}-${VER}.tar.gz *
-
-.PHONY: clean dist distclean man
+.PHONY: clean distclean
