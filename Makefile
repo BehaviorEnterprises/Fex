@@ -6,6 +6,8 @@ CC       ?=  gcc
 
 ifeq ($(OS),win)
 # fftw3 and sndfile??
+# FFTW3: http://www.fftw.org/install/windows.html
+# SNDFILE: http://www.mega-nerd.com/libsndfile/#Download
 DEFS     += -D_WIN32_
 CFLAGS   += -I"C:\Program Files\Common Files\MinGW\GLUT\include"
 LDLIBS   += -L"C:\Program Files\Common Files\MinGW\GLUT\lib" -lglut32 -lopengl32 -Wl,--subsystem,windows

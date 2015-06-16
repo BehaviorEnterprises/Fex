@@ -1,3 +1,0 @@
-gcc -c -o example.o example.c -I"C:\Program Files\Common Files\MinGW\GLUT\include"
-
-gcc -o example.exe example.o -L"C:\Program Files\Common Files\MinGW\GLUT\lib" -lglut32 -lopengl32 -Wl,--subsystem,windows
