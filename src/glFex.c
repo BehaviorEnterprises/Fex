@@ -1,6 +1,6 @@
 
 
-#ifdef _WIN32_
+#ifdef WIN64_BUILD
 #include <windows.h>
 #endif
 #include <GL/freeglut.h>
@@ -56,7 +56,7 @@ void drawTop() {
    whenever the window needs to be re-painted. */
 void display() {
 	glClear(GL_COLOR_BUFFER_BIT);
-	glEnable(GL_MULTISAMPLE_ARB);
+	//glEnable(GL_MULTISAMPLE_ARB);
 	/* Use spectrogram background: */
 	glColor4f(1.0,1.0,1.0, 1.0);
 	glEnable(GL_TEXTURE_2D);
