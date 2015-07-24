@@ -19,6 +19,7 @@ typedef struct FEX {
 		int winlen, hop;
 		double lopass, hipass, floor, threshold;
 		// colors
+		int val[FexConfLAST];
 	} conf;
 } FEX;
 

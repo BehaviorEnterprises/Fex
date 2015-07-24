@@ -18,5 +18,10 @@ fex_t configure(FEX *fex) {
 	fex->conf.hipass = 10.0;
 	fex->conf.floor = -28.0;
 	fex->conf.threshold = -14.0;
+	//
+	fex->conf.val[FexShowHud] = true;
+	fex->conf.val[FexShowOverlay] = true;
+	fex->conf.val[FexShowHudResizing] = false;
+	fex->conf.val[FexShowOverlayResizing] = false;
 	return FexSuccess;
 }

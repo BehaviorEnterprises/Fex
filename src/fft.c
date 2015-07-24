@@ -14,7 +14,7 @@
 static double window_function[4] = { 0.5, 0.5, 0, 0 };
 
 
-#define MatrixAmp(mat,nf,t,f)		(mat)[nf * t + f]
+//#define MatrixAmp(mat,nf,t,f)		(mat)[nf * t + f]
 fex_t create_fft(FEX *fex) {
 	if (!fex) return FexNullAccess;
 	/* allocate space */
@@ -49,7 +49,7 @@ fex_t create_fft(FEX *fex) {
 				window_function[2] * cos(2 * M_PI * t / (fex->conf.winlen - 1.0)) -
 				window_function[3] * cos(2 * M_PI * t / (fex->conf.winlen - 1.0));
 	/* loop over signal */
-	for (pos = 0, t = 0; pos < fex->wave.samples; pos += fex->conf.hop, ++t) {
+	for (pos = 0, t = 0; pos < fex->wave.samples && t < fex->fft.ntime; pos += fex->conf.hop, ++t) {
 		/* copy windowed chunk to in */
 		for (i = 0; i < fex->conf.winlen; ++i) {
 			if (pos + i < fex->wave.samples)

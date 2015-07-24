@@ -24,6 +24,7 @@ static int nfex = 0;
 /**********************/
 
 fex_t fex_create(const char *fname) {
+	if (!fname) return FexFileError;
 	fex_p = realloc(fex_p, (++nfex) * sizeof(FEX *));
 	fex_p[nfex-1] = malloc(sizeof(FEX));
 	fex_t ret;
@@ -54,6 +55,7 @@ unsigned char *fex_get_spectrogram(fex_t fex_n, int *w_ptr, int *h_ptr) {
 	int h = fex->fft.nfreq;
 
 	spec_data = realloc(spec_data, w * h * 3);
+//	spec_data = realloc(spec_data, w * h);
 	// TODO error checking, speed of loop order?
 	int t, f;
 	unsigned char *a = spec_data;
@@ -75,9 +77,24 @@ if (dd < 0) aa = 0;
 	return spec_data;
 }
 
+int fex_floor(fex_t fex_n, float adj) {
+	FEX *fex = fex_ptr(fex_n);
+	fex->conf.floor += adj;
+}
+
+int fex_get_conf(fex_t fex_n, FexConfVar var) {
+	FEX *fex = fex_ptr(fex_n);
+	return fex->conf.val[var];
+}
+
 int *fex_get_path(fex_t fex_n) {
 	FEX *fex = fex_ptr(fex_n);
 	return fex->fft.path;
+}
+
+int fex_set_conf(fex_t fex_n, FexConfVar var, int val) {
+	FEX *fex = fex_ptr(fex_n);
+	return (fex->conf.val[var] = val);
 }
 
 int fex_threshold(fex_t fex_n, float adj) {

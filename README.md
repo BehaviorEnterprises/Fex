@@ -17,3 +17,4 @@ Update, the windows version now runs to the same degree as the linux version
 
 - erasing
 - complete configure module
+- limit checks on fex_floor and fex_threshold
