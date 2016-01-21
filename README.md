@@ -12,6 +12,8 @@ of value.  The windows build will not yet build.
 
 Update, the windows version now runs to the same degree as the linux version
 
+2016.01.21 Testing with freeglut is being abandonded in favor of SFML which now
+has it's own branch.
 
 ## TODO
 
