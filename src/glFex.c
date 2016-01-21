@@ -18,7 +18,7 @@ static void motion_notify_active(int, int);
 static void motion_notify_passive(int, int);
 
 /* local data */
-static bool running = true, overlay = true, hud = true, resizing = false;
+static bool overlay = true, hud = true, resizing = false;
 static fex_t fex;
 static int topWin, win;
 static double ftime, freq, calc;
@@ -32,8 +32,7 @@ int main(int argc, char **argv) {
 	if ( (fex=fex_create(argv[1])) < 0 ) return fex;
 	glut_init(argc, argv);
 	redraw_spectrogram();
-	while (running)
-		glutMainLoopEvent();
+	glutMainLoop();
 	double pex, tex;
 	calc = fex_measure(fex, &pex, &tex);
 	fex_destroy(fex);
@@ -56,6 +55,7 @@ void reshapeTop() {
 int glut_init(int argc, char **argv) {
    glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_MULTISAMPLE);
+	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 	/* Create topWin */
    topWin = glutCreateWindow("FEX: ...");
 	glClearColor(1.0,1.0,1.0,1.0);
@@ -84,7 +84,7 @@ void key_press(int key, int x, int y) {
 		case GLUT_KEY_DOWN:  fex_threshold(fex, -0.5); redraw_spectrogram(); break;
 		case GLUT_KEY_LEFT:  fex_floor(fex, -0.5);     redraw_spectrogram(); break;
 		case GLUT_KEY_RIGHT: fex_floor(fex, 0.5);      redraw_spectrogram(); break;
-		case GLUT_KEY_F1:    running = false;                                break;
+		case GLUT_KEY_F1:    glutLeaveMainLoop();                            break;
 		case GLUT_KEY_F2:    overlay = !overlay;       redraw_spectrogram(); break;
 		case GLUT_KEY_F11:   glutFullScreenToggle();                         break;
 		default: return;
@@ -125,10 +125,11 @@ void motion_notify_active(int x, int y) {
 	lock_to_top = false;
 }
 
+int mx = 0, my = 0;
 void motion_notify_passive(int x, int y) {
 	double ww = glutGet(GLUT_WINDOW_WIDTH);
 	double wh = glutGet(GLUT_WINDOW_HEIGHT);
-	fex_coordinates(fex, x / ww, 1.0 - y / wh, &ftime, &freq);
+	fex_coordinates(fex, (mx=x) / ww, 1.0 - (my=y) / wh, &ftime, &freq);
 	glutPostRedisplay();
 }
 
@@ -201,9 +202,9 @@ if (fex_get_conf(fex, FexShowOverlay) && (resizing ? fex_get_conf(fex,FexShowOve
 	glEnd();
 }
 
-if (fex_get_conf(fex, FexShowHud) && (resizing ? fex_get_conf(fex,FexShowHudResizing) : true)) {
 float x_units = 2.0 / (float) glutGet(GLUT_WINDOW_WIDTH);
 float y_units = 2.0 / (float) glutGet(GLUT_WINDOW_HEIGHT);
+if (fex_get_conf(fex, FexShowHud) && (resizing ? fex_get_conf(fex,FexShowHudResizing) : true)) {
 glColor4f(0.0,0.0,0.5,0.4);
 	glBegin(GL_QUADS);
       glVertex2f(-1.0f, 1.0f - 26 * y_units);
@@ -219,6 +220,19 @@ char str[32];
 snprintf(str,32,"%0.3lfs %0.1lfkHz    FE: %0.2lf",ftime,freq,calc);
 glutBitmapString(GLUT_BITMAP_HELVETICA_18,str);
 }
+
+/* eraser */
+glColor4f(1.0,0.2,0.0,0.4);
+float fx = mx * x_units - 1.0;
+float fy = 1.0 - my * y_units;
+	glBegin(GL_QUADS);
+      glVertex2f(fx - 0.1, fy - 0.1);
+      glVertex2f(fx + 0.1, fy - 0.1);
+      glVertex2f(fx + 0.1, fy + 0.1);
+      glVertex2f(fx - 0.1, fy + 0.1);
+	glEnd();
+
+/* */
 	glDisable(GL_BLEND);
 	glutSwapBuffers();
 }
