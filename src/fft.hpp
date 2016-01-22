@@ -9,9 +9,7 @@ class Fft : public Config {
 		sf::Texture texSpec, texThresh;
 		double *freq = NULL, *time = NULL, *amp = NULL;
 		unsigned short int *erase = NULL;
-		int *peak;
-
-		void checkPeaks();
+		sf::VertexArray points, lines;
 
 	protected:
 		sf::Sprite spec, thresh;
@@ -19,13 +17,15 @@ class Fft : public Config {
 		sf::SoundBuffer song;
 		int ntime, nfreq;
 
-		sf::VertexArray getLines();
-		sf::VertexArray getPoints();
-		void make_spec();
-		void make_thresh();
-		void erase_shift();
-		void erase_point(int, int);
-		void erase_undo();
+		void makeSpectrogram();
+		void makeThreshold();
+		void makeOverlay();
+		sf::VertexArray const &getPoints() const { return points; };
+		sf::VertexArray const &getLines() const { return lines; };
+
+		void eraseShift();
+		void erasePoint(int, int);
+		void eraseUndo();
 
 	public:
 		Fft(int, const char **);

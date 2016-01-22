@@ -117,8 +117,8 @@ void Spectrogram::ev_close(sf::Event ev) {
 void Spectrogram::ev_keypress(sf::Event ev) {
 	if (ev.key.control) {
 		if (ev.key.code == sf::Keyboard::Q) win.close();
-		else if (ev.key.code == sf::Keyboard::Right) { conf.floor -= 0.25; make_spec(); }
-		else if (ev.key.code == sf::Keyboard::Left) { conf.floor += 0.25; make_spec(); }
+		else if (ev.key.code == sf::Keyboard::Right) { conf.floor -= 0.25; makeSpectrogram(); }
+		else if (ev.key.code == sf::Keyboard::Left) { conf.floor += 0.25; makeSpectrogram(); }
 		else if (ev.key.code == sf::Keyboard::Up) { conf.threshold -= 0.25;  /* redraw overlay */ }
 		else if (ev.key.code == sf::Keyboard::Down) { conf.threshold += 0.25;  /* redraw overlay */ }
 	}

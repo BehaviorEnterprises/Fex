@@ -21,7 +21,6 @@ Fft::Fft(int argc, const char **argv) : Config(argc, argv) {
 	freq = (double *) malloc(nfreq * sizeof(double));
 	amp = (double *) malloc(nfreq * ntime * sizeof(double));
 	erase = (unsigned short int *) calloc(nfreq * ntime, sizeof(unsigned short int *));
-	peak = (int *) malloc(ntime * sizeof(int));
 	/* fill time and freq arrays */
 	double nyquist = (double) song.getSampleRate() / 2000.0;
 	double dt = song.getDuration().asSeconds() / (double) ntime;
@@ -87,12 +86,16 @@ Fft::Fft(int argc, const char **argv) : Config(argc, argv) {
 		if (amp[nfreq * t + f] > max) max = amp[nfreq * t + f];
 	for (t = 0; t < ntime; ++t) for (f = 0; f < nfreq; ++f)
 		amp[nfreq * t + f] = 10.0 * log10(amp[nfreq * t + f] / max);
-	make_spec();
-	make_thresh();
-	checkPeaks();
+	lines.setPrimitiveType(sf::LinesStrip);
+	lines.resize(ntime);
+	points.setPrimitiveType(sf::Quads);
+	points.resize(ntime * 4);
+	makeSpectrogram();
+	makeThreshold();
+	makeOverlay();
 }
 
-void Fft::make_spec() {
+void Fft::makeSpectrogram() {
 	int t, f;
 	sf::Image img;
 	img.create(ntime, nfreq);
@@ -109,34 +112,34 @@ void Fft::make_spec() {
 	spec.setScale(1.0,-1.0);
 }
 
-sf::VertexArray Fft::getLines() {
-// TODO need to interpolate "blank" points
-	sf::VertexArray lines(sf::LinesStrip, ntime);
-	int t;
+void Fft::makeOverlay() {
+// TODO add fex calculation here?
+//   * Change function name to "recalculate"?
+	int t, f, fmax;
+	double max;
 	for (t = 0; t < ntime; ++t) {
-		lines[t].position = sf::Vector2f(t + 0.5, - peak[t] - 0.5);
+		fmax = -1;
+		max = std::numeric_limits<double>::lowest();
+		for (f = 0; f < nfreq; ++f) {
+			if (erase[nfreq * t + f]) continue;
+			if (amp[nfreq * t + f] < max) continue;
+			max = amp[nfreq * t + (fmax=f)];
+		}
+// TODO need to interpolate "blanks" for lines
+		lines[t].position = sf::Vector2f(t + 0.5, - fmax - 0.5);
 		lines[t].color = sf::Color::Red;
-	}
-	return lines;
-}
-
-sf::VertexArray Fft::getPoints() {
-	sf::VertexArray points(sf::Quads, ntime * 4);
-	int t;
-	for (t = 0; t < ntime; ++t) {
-		points[4*t].position = sf::Vector2f(t, - peak[t]);
-		points[4*t+1].position = sf::Vector2f(t + 1, - peak[t]);
-		points[4*t+2].position = sf::Vector2f(t + 1, - peak[t] - 1);
-		points[4*t+3].position = sf::Vector2f(t, - peak[t] - 1);
+		points[4*t].position = sf::Vector2f(t, - fmax);
+		points[4*t+1].position = sf::Vector2f(t + 1, - fmax);
+		points[4*t+2].position = sf::Vector2f(t + 1, - fmax - 1);
+		points[4*t+3].position = sf::Vector2f(t, - fmax - 1);
 		points[4*t].texCoords = sf::Vector2f(0,0);
 		points[4*t+1].texCoords = sf::Vector2f(64,0);
 		points[4*t+2].texCoords = sf::Vector2f(64,64);
 		points[4*t+3].texCoords = sf::Vector2f(0,64);
 	}
-	return points;
 }
 
-void Fft::make_thresh() {
+void Fft::makeThreshold() {
 	int t, f;
 	sf::Image img;
 	img.create(ntime, nfreq);
@@ -148,7 +151,7 @@ void Fft::make_thresh() {
 	thresh.setScale(1.0,-1.0);
 }
 
-void Fft::erase_shift() {
+void Fft::eraseShift() {
 	int t, f;
 	unsigned short int *a;
 	for (f = 0; f < nfreq; ++f) for (t = 0; t < ntime; ++t) {
@@ -157,7 +160,7 @@ void Fft::erase_shift() {
 	}
 }
 
-void Fft::erase_undo() {
+void Fft::eraseUndo() {
 	int t, f;
 	unsigned short int *a;
 	for (f = 0; f < nfreq; ++f) for (t = 0; t < ntime; ++t) {
@@ -166,7 +169,7 @@ void Fft::erase_undo() {
 	}
 }
 
-void Fft::erase_point(int x, int y) {
+void Fft::erasePoint(int x, int y) {
 	if (x < ntime && y < nfreq) erase[nfreq * x + y] |= 0x01;
 }
 
@@ -175,21 +178,6 @@ Fft::~Fft() {
 	if (time) free(time); time = NULL;
 	if (freq) free(freq); freq = NULL;
 	if (erase) free(erase); erase = NULL;
-	if (peak) free(peak); peak = NULL;
 	ntime = nfreq = 0;
 }
 
-void Fft::checkPeaks() {
-	int t, f;
-	double max;
-	for (t = 0; t < ntime; ++t) {
-		peak[t] = -1;
-		max = std::numeric_limits<double>::lowest();
-		for (f = 0; f < nfreq; ++f) {
-			if (erase[nfreq * t + f]) continue;
-			if (amp[nfreq * t + f] < max) continue;
-			max = amp[nfreq * t + f];
-			peak[t] = f;
-		}
-	}
-}
