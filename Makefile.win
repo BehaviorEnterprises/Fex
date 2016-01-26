@@ -1,0 +1,44 @@
+PROG        =  fex
+VER         =  3.0pre
+PREFIX     ?=  /usr
+CC          =  i686-w64-mingw32-c++
+CXX         =  i686-w64-mingw32-c++
+CONFFILE   ?=  ${PREFIX}/share/${PROG}/${PROG}rc
+DEFS        =  -DPROGRAM_NAME=${PROG} -DPROGRAM_VER=${VER} -DDEFAULT_CONFIG=${CONFFILE}
+CPPFLAGS   ?=  -D_FORTIFY_SOURCE=2
+CXXFLAGS   ?=  -O2 -pipe --param=ssp-buffer-size=4
+LDFLAGS    ?=  -Wl,-O1,--sort-common,--as-needed
+CXXFLAGS   +=  $(shell i686-w64-mingw32-pkg-config --cflags fftw3) -std=c++11 ${DEFS}
+LDLIBS     +=  $(shell i686-w64-mingw32-pkg-config --libs fftw3) $(shell pkg-config --libs sfml-all)
+MODULES     =  config fex fft spectrogram
+MANPAGES    =  ${PROG}.1 ${PROG}rc.5
+VPATH       =  src
+
+${PROG}: ${MODULES:%=%.o}
+
+%.o: %.cpp %.hpp
+
+clean:
+	@rm -rf ${PROG}-*.tar.gz
+	@rm -rf ${MODULES:%=%.o}
+
+distclean: clean
+	@rm -rf ${PROG} *.tar.gz
+
+tarball: distclean
+	@tar -czf ${PROG}-${VER}.tar.gz *
+
+bundle: ${PROG}
+	@mv ${PROG} ${PROG}.exe
+	@cp /usr/i686-w64-mingw32/bin/libfftw3-3.dll ./
+	@cp /usr/i686-w64-mingw32/bin/libfftw3f-3.dll ./
+	@cp /usr/i686-w64-mingw32/bin/libfftw3l-3.dll ./
+	@cp /usr/i686-w64-mingw32/bin/sfml-audio-2.dll ./
+	@cp /usr/i686-w64-mingw32/bin/sfml-graphics-2.dll ./
+	@cp /usr/i686-w64-mingw32/bin/sfml-network-2.dll ./
+	@cp /usr/i686-w64-mingw32/bin/sfml-system-2.dll ./
+	@cp /usr/i686-w64-mingw32/bin/sfml-window-2.dll ./
+	@tar -czf ${PROG}-${VER}-win32.tar.gz ${PROG}.exe *.dll
+	@rm -f *.dll
+
+.PHONY: clean distclean tarball bundle
