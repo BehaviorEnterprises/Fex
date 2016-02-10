@@ -101,7 +101,7 @@ typedef struct Config {
 	RGBA col[RGBA_LAST];
 	cairo_font_face_t *font, *bfont;
 	char **help_cmd;
-	Bool long_out, layers;
+	Bool long_out, layers, log10;
 } Config;
 
 /* main.c */

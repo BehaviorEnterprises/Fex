@@ -146,9 +146,10 @@ int spectro_points() {
 		/* add points and do calculations if f is above threshold */
 		if (f > 0 && spect->fft->amp[i][f] > conf.thresh) {
 			if (lt != spect->fft->time[0]) {
-				spect->pex += sqrt(
-					(spect->fft->freq[f] - lf) * (spect->fft->freq[f] - lf) +
-					(spect->fft->time[i] - lt) * (spect->fft->time[i] - lt) );
+				if (conf.log10)
+					spect->pex += hypot(log10(spect->fft->freq[f]) - log10(lf),spect->fft->time[i] - lt);
+				else
+					spect->pex += hypot(spect->fft->freq[f] - lf,spect->fft->time[i] - lt);
 				spect->tex += spect->fft->time[i] - lt;
 			}
 			lt = spect->fft->time[i];

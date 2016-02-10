@@ -104,7 +104,7 @@ const char *configure(int argc, const char **argv) {
 	if (!rc) die("unable to open configuration file");
 	/* initialize conf structure and config reading variables */
 	char line[LINE_LEN], prefix[32], option[32], fmt[LINE_LEN];
-	char window[32], font_fam[LINE_LEN];
+	char window[32], font_fam[LINE_LEN], logFreq[32];
 	const char *fspec[] = { "", "%d ","%f ", "%lf ", "%s", "%[^\n]" };
 	int j, mode;
 	conf.thresh = 14.0;
@@ -114,6 +114,7 @@ const char *configure(int argc, const char **argv) {
 	conf.winlen = 256;
 	conf.hop = 0;
 	conf.win = (WindowFunction *) windows;
+	conf.log10 = False;
 	struct {
 		const char *name;
 		int mode;
@@ -142,6 +143,7 @@ const char *configure(int argc, const char **argv) {
 	}
 	/* set hop, threshold, floor, and windowing function */
 	if (!conf.hop) conf.hop = conf.winlen / 4;
+	if (logFreq[0] == 't' || logFreq[0] == 'T') conf.log10 = True;
 	conf.thresh *= -1;
 	conf.spect_floor *= -1;
 	if (strncasecmp(window,"custom",6) == 0)

@@ -30,6 +30,10 @@
 { "help", CONF_SET,
 	{ C_TYPE_LN, C_TYPE__, C_TYPE__, C_TYPE__, C_TYPE__ },
 	{ &help_cmd, NULL, NULL, NULL, NULL}, },
+{ "logFreq", CONF_SET,
+	{ C_TYPE_S, C_TYPE__, C_TYPE__, C_TYPE__, C_TYPE__ },
+	{ &logFreq, NULL, NULL, NULL, NULL}, },
+
 
 /* color */
 { "spectrogram", CONF_COL,
