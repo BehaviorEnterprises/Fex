@@ -5,7 +5,7 @@ CC          =  g++
 CONFFILE   ?=  ${PREFIX}/share/${PROG}/${PROG}rc
 DEFS        =  -DPROGRAM_NAME=${PROG} -DPROGRAM_VER=${VER} -DDEFAULT_CONFIG=${CONFFILE}
 CPPFLAGS   ?=  -D_FORTIFY_SOURCE=2
-CXXFLAGS   ?=  -march=native -O2 -pipe -fstack-protector-strong --param=ssp-buffer-size=4
+CXXFLAGS   ?=  -march=native -O2 -pipe -fstack-protector-strong -Wstack-protector
 LDFLAGS    ?=  -Wl,-O1,--sort-common,--as-needed,-z,relro
 CXXFLAGS   +=  $(shell pkg-config --cflags sfml-all fftw3) -std=c++11 ${DEFS}
 LDLIBS     +=  $(shell pkg-config --libs sfml-all fftw3)

@@ -115,27 +115,36 @@ void Fft::makeSpectrogram() {
 void Fft::makeOverlay() {
 // TODO add fex calculation here?
 //   * Change function name to "recalculate"?
-	int t, f, fmax;
+	int t, f, fmax, n;;
 	double max;
-	for (t = 0; t < ntime; ++t) {
+	for (t = 0, n = 0; t < ntime; ++t) {
 		fmax = -1;
-		max = std::numeric_limits<double>::lowest();
+		max = std::numeric_limits<double>::lowest(); // TODO: is this negative?  Should it be?
 		for (f = 0; f < nfreq; ++f) {
 			if (erase[nfreq * t + f]) continue;
 			if (amp[nfreq * t + f] < max) continue;
 			max = amp[nfreq * t + (fmax=f)];
 		}
-// TODO need to interpolate "blanks" for lines
-		lines[t].position = sf::Vector2f(t + 0.5, - fmax - 0.5);
-		lines[t].color = sf::Color::Red;
-		points[4*t].position = sf::Vector2f(t, - fmax);
-		points[4*t+1].position = sf::Vector2f(t + 1, - fmax);
-		points[4*t+2].position = sf::Vector2f(t + 1, - fmax - 1);
-		points[4*t+3].position = sf::Vector2f(t, - fmax - 1);
-		points[4*t].texCoords = sf::Vector2f(0,0);
-		points[4*t+1].texCoords = sf::Vector2f(64,0);
-		points[4*t+2].texCoords = sf::Vector2f(64,64);
-		points[4*t+3].texCoords = sf::Vector2f(0,64);
+		if (max < -1.0 * conf.threshold) continue;
+		lines[n].position = sf::Vector2f(t + 0.5, - fmax - 0.5);
+		points[4*n].position = sf::Vector2f(t, - fmax);
+		points[4*n+1].position = sf::Vector2f(t + 1, - fmax);
+		points[4*n+2].position = sf::Vector2f(t + 1, - fmax - 1);
+		points[4*n+3].position = sf::Vector2f(t, - fmax - 1);
+// TODO: These next lines should only need to be done once ... move to constructor?
+		lines[n].color = conf.linesFG;
+		points[4*n].texCoords = sf::Vector2f(0,0);
+		points[4*n+1].texCoords = sf::Vector2f(64,0);
+		points[4*n+2].texCoords = sf::Vector2f(64,64);
+		points[4*n+3].texCoords = sf::Vector2f(0,64);
+		++n;
+	}
+	for (; n < ntime; ++n) {
+		lines[n].position = lines[n-1].position;
+		points[4*n].position = sf::Vector2f(-2,0);
+		points[4*n+1].position = sf::Vector2f(-2,0);
+		points[4*n+2].position = sf::Vector2f(-2,0);
+		points[4*n+3].position = sf::Vector2f(-2,0);
 	}
 }
 

@@ -11,9 +11,11 @@ class Spectrogram : public Fft {
 		sf::RenderWindow win;
 		sf::View view;
 		sf::Vector2f mouse;
-		sf::Font font;
+		sf::RectangleShape back;
+		sf::Texture ball;
 		float aspect;
 
+		void draw_main();
 		void draw_cursor();
 		void draw_hud();
 

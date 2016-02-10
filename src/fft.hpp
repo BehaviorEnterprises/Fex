@@ -13,7 +13,6 @@ class Fft : public Config {
 
 	protected:
 		sf::Sprite spec, thresh;
-		sf::String name;
 		sf::SoundBuffer song;
 		int ntime, nfreq;
 
