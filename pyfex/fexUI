@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+
+from sys import argv
+from subprocess import DEVNULL, check_output
+from configparser import ConfigParser
+
+ini = ConfigParser()
+ini.read('default.ini')
+conf = ini['defaults']
+col = ini['colors']
+args = [
+	'./fex',
+	'--winSize=' +    conf['window length'],
+	'--binSize=' +    conf['bin size'],
+	'--loPass=' +     conf['low pass'],
+	'--hiPass=' +     conf['high pass'],
+	'--threshold=' +  conf['threshold'],
+	'--floor=' +      conf['floor'],
+	'--winBG=' +      col['window background'],
+	'--specBG=' +     col['spectrogram background'],
+	'--specFG=' +     col['spectrogram foreground'],
+	'--threshFG=' +   col['threshold'],
+	'--pointBG=' +    col['point fill'],
+	'--pointFG=' +    col['point border'],
+	'--linesFG=' +    col['lines']
+]
+
+def run_fex(files):
+	if len(files) == 0:
+		print("zero")
+		# prompt with dialog returning list of files
+		# run_fex(list of files)
+	elif len(files) == 1:
+		print(check_output(args + [files[0]],stderr=DEVNULL).decode("utf-8"))
+	else:
+		print("many")
+		# loop through files running fex on each
+
+argv.remove(argv[0])
+run_fex(argv)
+
+

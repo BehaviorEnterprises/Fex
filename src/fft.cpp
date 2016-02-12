@@ -13,7 +13,7 @@ BlackHarris  0.35875   0.48829   0.14128   0.01168
 
 */
 
-Fft::Fft(int argc, const char **argv) : Config(argc, argv) {
+Fft::Fft(int argc, char *const *argv) : Config(argc, argv) {
 	song.loadFromFile(fname);
 	ntime = song.getSampleCount() / conf.hop;
 	nfreq = conf.winlen / 2 + 0.5;
@@ -86,10 +86,18 @@ Fft::Fft(int argc, const char **argv) : Config(argc, argv) {
 		if (amp[nfreq * t + f] > max) max = amp[nfreq * t + f];
 	for (t = 0; t < ntime; ++t) for (f = 0; f < nfreq; ++f)
 		amp[nfreq * t + f] = 10.0 * log10(amp[nfreq * t + f] / max);
+	/* prepare point and line overlays */
 	lines.setPrimitiveType(sf::LinesStrip);
 	lines.resize(ntime);
 	points.setPrimitiveType(sf::Quads);
 	points.resize(ntime * 4);
+	for (t = 0; t < ntime; ++t) {
+		lines[t].color = conf.linesFG;
+		points[4*t].texCoords = sf::Vector2f(0,0);
+		points[4*t+1].texCoords = sf::Vector2f(64,0);
+		points[4*t+2].texCoords = sf::Vector2f(64,64);
+		points[4*t+3].texCoords = sf::Vector2f(0,64);
+	}
 	makeSpectrogram();
 	makeThreshold();
 	makeOverlay();
@@ -113,10 +121,10 @@ void Fft::makeSpectrogram() {
 }
 
 void Fft::makeOverlay() {
-// TODO add fex calculation here?
 //   * Change function name to "recalculate"?
 	int t, f, fmax, n;;
-	double max;
+	double max, pt, pf;
+	pathLength = timeLength = 0.0;
 	for (t = 0, n = 0; t < ntime; ++t) {
 		fmax = -1;
 		max = std::numeric_limits<double>::lowest(); // TODO: is this negative?  Should it be?
@@ -126,20 +134,20 @@ void Fft::makeOverlay() {
 			max = amp[nfreq * t + (fmax=f)];
 		}
 		if (max < -1.0 * conf.threshold) continue;
+		if (n) { /* increment lengths for fex calculation for all but first point */
+			pathLength += hypot(freq[fmax]-pf,time[t]-pt);
+			timeLength += time[t]-pt;
+		}
+		pf = freq[fmax]; pt = time[t];
 		lines[n].position = sf::Vector2f(t + 0.5, - fmax - 0.5);
 		points[4*n].position = sf::Vector2f(t, - fmax);
 		points[4*n+1].position = sf::Vector2f(t + 1, - fmax);
 		points[4*n+2].position = sf::Vector2f(t + 1, - fmax - 1);
 		points[4*n+3].position = sf::Vector2f(t, - fmax - 1);
-// TODO: These next lines should only need to be done once ... move to constructor?
-		lines[n].color = conf.linesFG;
-		points[4*n].texCoords = sf::Vector2f(0,0);
-		points[4*n+1].texCoords = sf::Vector2f(64,0);
-		points[4*n+2].texCoords = sf::Vector2f(64,64);
-		points[4*n+3].texCoords = sf::Vector2f(0,64);
 		++n;
 	}
 	for (; n < ntime; ++n) {
+		/* set remaining lines to last point and points to off screen */
 		lines[n].position = lines[n-1].position;
 		points[4*n].position = sf::Vector2f(-2,0);
 		points[4*n+1].position = sf::Vector2f(-2,0);

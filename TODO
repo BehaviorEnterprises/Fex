@@ -1,4 +1,6 @@
 
-- Fix scaling of HUD
-	* add second view?
 - Add eraser function to spectrogram module
+- Add crop option
+- Add log transformation to frequency?
+- Implement config file reading
+

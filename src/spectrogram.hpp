@@ -30,7 +30,7 @@ class Spectrogram : public Fft {
 		void listen(float=1.0);
 	public:
 		int main_loop();
-		Spectrogram(int, const char **);
+		Spectrogram(int, char *const *);
 		~Spectrogram();
 };
 

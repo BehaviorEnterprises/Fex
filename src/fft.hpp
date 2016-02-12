@@ -15,6 +15,7 @@ class Fft : public Config {
 		sf::Sprite spec, thresh;
 		sf::SoundBuffer song;
 		int ntime, nfreq;
+		double pathLength, timeLength;
 
 		void makeSpectrogram();
 		void makeThreshold();
@@ -27,7 +28,7 @@ class Fft : public Config {
 		void eraseUndo();
 
 	public:
-		Fft(int, const char **);
+		Fft(int, char *const *);
 		~Fft();
 };
 

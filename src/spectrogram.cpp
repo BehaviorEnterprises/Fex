@@ -1,7 +1,7 @@
 
 #include "spectrogram.hpp"
 
-Spectrogram::Spectrogram(int argc, const char **argv) : Fft(argc, argv) {
+Spectrogram::Spectrogram(int argc, char *const *argv) : Fft(argc, argv) {
 //	if (getenv("FEX_FULLSCREEN"))
 		win.create(sf::VideoMode::getDesktopMode(), "Fex", sf::Style::Fullscreen);
 //	else
@@ -15,7 +15,7 @@ Spectrogram::Spectrogram(int argc, const char **argv) : Fft(argc, argv) {
 	render_ball.create(64,64);
 	sf::CircleShape dot(32);
 	dot.setFillColor(conf.pointBG);
-	dot.setOutlineColor(conf.pointFB);
+	dot.setOutlineColor(conf.pointFG);
 	dot.setOutlineThickness(-8);
 	render_ball.draw(dot);
 	ball = render_ball.getTexture();
@@ -33,15 +33,16 @@ int Spectrogram::main_loop() {
 		draw_main();
 		if (show.cursor) draw_cursor();
 		win.display();
-	char out[256];
-	snprintf(out,255,"%s - (%0.3fs, %0.3fKHz) FE: %lf ",
-		name,
-		song.getDuration().asSeconds() * mouse.x / ntime,
-		conf.lopass - (conf.hipass - conf.lopass) * mouse.y / nfreq,
-		1234.5
-	);
-	win.setTitle(sf::String(out));
+		char out[256];
+		snprintf(out,255,"%s - (%0.3fs, %0.3fKHz) FE: %lf ",
+			name,
+			song.getDuration().asSeconds() * mouse.x / ntime,
+			conf.lopass - (conf.hipass - conf.lopass) * mouse.y / nfreq,
+			1234.5
+		);
+		win.setTitle(sf::String(out));
 	}
+	printf("%lf\t%lf\t%lf\n", pathLength, timeLength, pathLength / timeLength);
 	return 0;
 }
 
@@ -152,6 +153,11 @@ void Spectrogram::ev_button(sf::Event ev) {
 
 void Spectrogram::ev_wheel(sf::Event ev) {
 	if (ev.mouseWheelScroll.wheel == 0) { /* vertical */
+		// TODO, make 0.0075 step size customizable?
+		float vx = view.getSize().x / ntime, vy = view.getSize().y / nfreq;
+		float dx = ev.mouseWheelScroll.delta;
+		if (dx < 0 && vx > 1.20 && vy > 1.20) return;
+		if (dx > 0 && vx < 0.01 && vy > 0.01) return;
 		view.zoom(1.0 - 0.0075 * ev.mouseWheelScroll.delta);
 		win.setView(view);
 	}
