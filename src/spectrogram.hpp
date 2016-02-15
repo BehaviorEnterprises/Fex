@@ -11,12 +11,14 @@ class Spectrogram : public Fft {
 		sf::Vector2f mouse, crop1;
 		sf::RectangleShape back;
 		sf::Texture ball;
+		sf::RectangleShape eraser;
 		bool mod_ctrl, mod_shift, mod_alt;
 		float aspect;
 
 		void draw_main();
 		void draw_cursor(float, float);
 		void draw_hud();
+		void erase();
 
 		void checkModKeys();
 		void ev_handler(sf::Event);

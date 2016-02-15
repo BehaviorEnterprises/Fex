@@ -7,10 +7,10 @@
 class Fft : public Config {
 	private:
 		sf::Texture texSpec, texThresh;
+		sf::VertexArray points, lines;
 		double *freq = NULL, *time = NULL, *amp = NULL;
 		unsigned short int *erase = NULL;
 		int t1, t2, f1, f2;
-		sf::VertexArray points, lines;
 
 	protected:
 		sf::Sprite spec, thresh;

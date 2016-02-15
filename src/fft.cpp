@@ -2,6 +2,7 @@
 #include "fft.hpp"
 
 // TODO configurable window_function
+// * Maybe these should just be defined from the command line.
 static double window_function[4] = { 0.5, 0.5, 0, 0 }; // hanning
 /*
 Hamming      0.54      0.46      0.00      0.00

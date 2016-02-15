@@ -1,5 +1,6 @@
 
 #include "spectrogram.hpp"
+#include <unistd.h>
 
 Spectrogram::Spectrogram(int argc, char *const *argv) : Fft(argc, argv) {
 //	if (getenv("FEX_FULLSCREEN"))
@@ -23,6 +24,10 @@ Spectrogram::Spectrogram(int argc, char *const *argv) : Fft(argc, argv) {
 	back.setFillColor(conf.specBG);
 	mouse.x = ntime / 2; mouse.y = - nfreq / 2;
 	crop1 = sf::Vector2f(-1, -1);
+	eraser.setSize(sf::Vector2f(4, 18));
+	eraser.setFillColor(sf::Color(255,200,0,200));
+	eraser.setPosition(0, 0);
+	eraser.setOrigin(2, 10);
 }
 
 Spectrogram::~Spectrogram() { }
@@ -72,6 +77,7 @@ void Spectrogram::draw_main() {
 		win.draw(thresh);
 		win.draw(getPoints(), &ball);
 		win.draw(getLines());
+		win.draw(eraser);
 	}
 }
 
@@ -135,23 +141,32 @@ void Spectrogram::ev_resize(sf::Event ev) {
 }
 
 void Spectrogram::ev_mousemove(sf::Event ev) {
-	sf::Vector2f prev = mouse;
-	mouse = win.mapPixelToCoords(sf::Vector2i(ev.mouseMove.x,ev.mouseMove.y));
-
-	if (sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
-		view.setSize(view.getSize().x + prev.x - mouse.x, view.getSize().y + prev.y - mouse.y);
-		view.move((prev.x - mouse.x)/2.0, (prev.y - mouse.y)/2.0);
+		sf::Vector2f prev = mouse;
+		mouse = win.mapPixelToCoords(sf::Vector2i(ev.mouseMove.x,ev.mouseMove.y));
+	checkModKeys();
+	if (mod_ctrl) {
 	}
-	if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-		view.move(prev.x - mouse.x, prev.y - mouse.y);
+	else if (mod_shift) {
 	}
-	win.setView(view);
+	else if (mod_alt) {
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) erase();
+	}
+	else {
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
+			view.setSize(view.getSize().x + prev.x - mouse.x, view.getSize().y + prev.y - mouse.y);
+			view.move((prev.x - mouse.x)/2.0, (prev.y - mouse.y)/2.0);
+		}
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+			view.move(prev.x - mouse.x, prev.y - mouse.y);
+		}
+		win.setView(view);
+	}
 	mouse = win.mapPixelToCoords(sf::Vector2i(ev.mouseMove.x,ev.mouseMove.y));
-
 	if (mouse.x < 0) mouse.x = 0.0;
 	else if (mouse.x > ntime) mouse.x = ntime;
 	if (mouse.y > 0) mouse.y = 0.0;
 	else if (mouse.y < - nfreq) mouse.y = - nfreq;
+	eraser.setPosition(mouse);
 }
 
 void Spectrogram::checkModKeys() {
@@ -162,6 +177,21 @@ void Spectrogram::checkModKeys() {
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::RShift)) mod_shift = true;
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt)) mod_alt = true;
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::RAlt)) mod_alt = true;
+}
+
+void Spectrogram::erase() {
+	sf::FloatRect rect = eraser.getGlobalBounds();
+	sf::Transform t = eraser.getInverseTransform();
+	sf::Vector2f point;
+	int i, j;
+	for (i = rect.left - 0.5; i < rect.left + rect.width + 1; ++i) {
+		for (j = rect.top - 0.5; j < rect.top + rect.height + 1; ++j) {
+			point = t.transformPoint(i + 0.5, j - 0.5);
+			if (point.x > -0.25 && point.x < 4.25 && point.y > -0.25 && point.y < 18.25)
+				erasePoint(i, -j);
+		}
+	}
+	makeOverlay();
 }
 
 void Spectrogram::ev_button(sf::Event ev) {
@@ -193,6 +223,7 @@ void Spectrogram::ev_button(sf::Event ev) {
 	}
 	/* Alt + button combinations are for working with the eraser: */
 	else if (mod_alt) switch (ev.mouseButton.button) {
+		case sf::Mouse::Button::Left: erase(); break;
 	}
 	else switch (ev.mouseButton.button) {
 		/* NOTE: left and right are handled in ev_mousemove */
@@ -207,6 +238,7 @@ void Spectrogram::ev_button(sf::Event ev) {
 void Spectrogram::ev_wheel(sf::Event ev) {
 	checkModKeys();
 	bool vert = (ev.mouseWheelScroll.wheel == 0);
+	float dx = ev.mouseWheelScroll.delta;
 	/* Control + wheel combinations are for working with the threshold: */
 	if (mod_ctrl && vert) {
 		// TODO: threshold up/down
@@ -218,18 +250,32 @@ void Spectrogram::ev_wheel(sf::Event ev) {
 	/* Alt + wheel combinations are for working with the eraser: */
 	else if (mod_alt && vert) {
 		// TODO: size up/down
+		sf::Vector2f scale = eraser.getScale();
+		float r = eraser.getRotation();
+		if (r < 30 || r > 330 || (r > 150 && r < 210) )
+			scale.y += 0.008 * dx;
+		else if ( (r > 60 && r < 120) || (r > 240 && r < 300) )
+			scale.x += 0.008 * dx;
+		else {
+			scale.x += 0.004 * dx;
+			scale.y += 0.004 * dx;
+		}
+		if (scale.x < 0.5) scale.x = 0.5;
+		else if (scale.x > 5.0) scale.x = 5.0;
+		if (scale.y < 0.5) scale.y = 0.5;
+		else if (scale.y > 5.0) scale.y = 5.0;
+		eraser.setScale(scale);
 	}
-	else if (mod_alt) {
-		// TODO: shape left/right
+	else if (mod_alt && !vert) {
+		eraser.rotate(-dx);
 	}
 	/* No modifier wheel movements are for zooming: */
 	else if (vert) {
 		// TODO: make 0.0075 step size customizable?
 		float vx = view.getSize().x / ntime, vy = view.getSize().y / nfreq;
-		float dx = ev.mouseWheelScroll.delta;
 		if (dx < 0 && vx > 1.20 && vy > 1.20) return;
 		if (dx > 0 && vx < 0.01 && vy > 0.01) return;
-		view.zoom(1.0 - 0.0075 * ev.mouseWheelScroll.delta);
+		view.zoom(1.0 - 0.0075 * dx);
 		win.setView(view);
 	}
 }

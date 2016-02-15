@@ -1,8 +1,10 @@
 
 - change function names to camelCase in spectrogram
-- Add eraser function to spectrogram module
+x Add eraser function to spectrogram module
+	- needs testing
 - Add log transformation to frequency?
 - Add cursorFG to config.cpp and python code
+- Too many "magic numbers" for eraser sizes...
 x Implement config file reading
 	* offloaded to pyfex
 	* fex only uses command line parameters
