@@ -6,22 +6,23 @@
 
 class Spectrogram : public Fft {
 	private:
-		enum Mode { MOVE_RESIZE };
-		Mode mode = MOVE_RESIZE;
 		sf::RenderWindow win;
 		sf::View view;
-		sf::Vector2f mouse;
+		sf::Vector2f mouse, crop1;
 		sf::RectangleShape back;
 		sf::Texture ball;
+		bool mod_ctrl, mod_shift, mod_alt;
 		float aspect;
 
 		void draw_main();
-		void draw_cursor();
+		void draw_cursor(float, float);
 		void draw_hud();
 
+		void checkModKeys();
 		void ev_handler(sf::Event);
 		void ev_close(sf::Event);
 		void ev_keypress(sf::Event);
+		void ev_keyrelease(sf::Event);
 		void ev_mousemove(sf::Event);
 		void ev_resize(sf::Event);
 		void ev_button(sf::Event);

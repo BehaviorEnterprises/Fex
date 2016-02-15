@@ -86,7 +86,7 @@ Fft::Fft(int argc, char *const *argv) : Config(argc, argv) {
 		if (amp[nfreq * t + f] > max) max = amp[nfreq * t + f];
 	for (t = 0; t < ntime; ++t) for (f = 0; f < nfreq; ++f)
 		amp[nfreq * t + f] = 10.0 * log10(amp[nfreq * t + f] / max);
-	/* prepare point and line overlays */
+	/* prepare point and line  overlays */
 	lines.setPrimitiveType(sf::LinesStrip);
 	lines.resize(ntime);
 	points.setPrimitiveType(sf::Quads);
@@ -98,7 +98,27 @@ Fft::Fft(int argc, char *const *argv) : Config(argc, argv) {
 		points[4*t+2].texCoords = sf::Vector2f(64,64);
 		points[4*t+3].texCoords = sf::Vector2f(0,64);
 	}
+	t1 = f1 = 0;
+	t2 = ntime; f2 = nfreq;
+	/* prepare sprites */
 	makeSpectrogram();
+	makeThreshold();
+	makeOverlay();
+}
+
+void Fft::setCrop(sf::Vector2f a, sf::Vector2f b) {
+	if (a.x == -1) { /* reset */
+		t1 = f1 = 0;
+		t2 = ntime; f2 = nfreq;
+	}
+	else {
+		a.y *= -1;
+		b.y *= -1;
+		t1 = (a.x < b.x ? a.x : b.x);
+		t2 = (a.x < b.x ? b.x : a.x);
+		f1 = (a.y < b.y ? a.y : b.y);
+		f2 = (a.y < b.y ? b.y : a.y);
+	}
 	makeThreshold();
 	makeOverlay();
 }
@@ -125,10 +145,10 @@ void Fft::makeOverlay() {
 	int t, f, fmax, n;;
 	double max, pt, pf;
 	pathLength = timeLength = 0.0;
-	for (t = 0, n = 0; t < ntime; ++t) {
+	for (t = t1, n = 0; t < t2; ++t) {
 		fmax = -1;
 		max = std::numeric_limits<double>::lowest(); // TODO: is this negative?  Should it be?
-		for (f = 0; f < nfreq; ++f) {
+		for (f = f1; f < f2; ++f) {
 			if (erase[nfreq * t + f]) continue;
 			if (amp[nfreq * t + f] < max) continue;
 			max = amp[nfreq * t + (fmax=f)];
@@ -160,7 +180,7 @@ void Fft::makeThreshold() {
 	int t, f;
 	sf::Image img;
 	img.create(ntime, nfreq);
-	for (f = 0; f < nfreq; ++f) for (t = 0; t < ntime; ++t)
+	for (f = f1; f < f2; ++f) for (t = t1; t < t2; ++t)
 		img.setPixel(t, f, sf::Color(255, 255, 255, (amp[nfreq * t + f] > - conf.threshold ? 255 : 0)));
 	texThresh.loadFromImage(img);
 	texThresh.setSmooth(true);

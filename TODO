@@ -1,6 +1,11 @@
 
+- change function names to camelCase in spectrogram
 - Add eraser function to spectrogram module
-- Add crop option
 - Add log transformation to frequency?
-- Implement config file reading
+- Add cursorFG to config.cpp and python code
+x Implement config file reading
+	* offloaded to pyfex
+	* fex only uses command line parameters
+	* this makes porting across platforms easier
+		* at least for me: I have no idea where a Win user would keep config files.
 

@@ -21,6 +21,8 @@ Spectrogram::Spectrogram(int argc, char *const *argv) : Fft(argc, argv) {
 	ball = render_ball.getTexture();
 	back.setSize(sf::Vector2f(ntime,-nfreq));
 	back.setFillColor(conf.specBG);
+	mouse.x = ntime / 2; mouse.y = - nfreq / 2;
+	crop1 = sf::Vector2f(-1, -1);
 }
 
 Spectrogram::~Spectrogram() { }
@@ -31,7 +33,10 @@ int Spectrogram::main_loop() {
 		ev_handler(ev);
 		while (win.pollEvent(ev)) ev_handler(ev);
 		draw_main();
-		if (show.cursor) draw_cursor();
+		if (show.cursor) {
+			if (crop1.x > 0) draw_cursor(crop1.x, crop1.y);
+			draw_cursor(mouse.x, mouse.y);
+		}
 		win.display();
 		char out[256];
 		snprintf(out,255,"%s - (%0.3fs, %0.3fKHz) FE: %lf ",
@@ -50,6 +55,7 @@ void Spectrogram::ev_handler(sf::Event ev) {
 	switch (ev.type) {
 		case sf::Event::Closed: ev_close(ev); break;
 		case sf::Event::KeyPressed: ev_keypress(ev); break;
+		case sf::Event::KeyReleased: ev_keyrelease(ev); break;
 		case sf::Event::MouseMoved: ev_mousemove(ev); break;
 		case sf::Event::MouseButtonPressed: ev_button(ev); break;
 		case sf::Event::MouseWheelScrolled: ev_wheel(ev); break;
@@ -69,14 +75,15 @@ void Spectrogram::draw_main() {
 	}
 }
 
-void Spectrogram::draw_cursor() {
+void Spectrogram::draw_cursor(float x, float y) {
+	// TODO get config cursor color
 	sf::RectangleShape lineV(sf::Vector2f(1, nfreq));
-	lineV.setFillColor(sf::Color(255,0,0,120));
-	lineV.setPosition(view.getViewport().left + mouse.x, -nfreq);
+	lineV.setFillColor(conf.cursorFG);
+	lineV.setPosition(view.getViewport().left + x, -nfreq);
 	win.draw(lineV);
 	sf::RectangleShape lineH(sf::Vector2f(ntime, 1));
-	lineH.setFillColor(sf::Color(255,0,0,120));
-	lineH.setPosition(0,view.getViewport().top + mouse.y);
+	lineH.setFillColor(conf.cursorFG);
+	lineH.setPosition(0,view.getViewport().top + y);
 	win.draw(lineH);
 }
 
@@ -87,11 +94,9 @@ void Spectrogram::listen(float speed) {
 	while(snd.getStatus() == 2) {
 		sf::RectangleShape line(sf::Vector2f(10, nfreq));
 		line.setFillColor(sf::Color(0,255,0,120));
-		//line.setPosition((float) view.getSize().x * snd.getPlayingOffset().asSeconds() / song.getDuration().asSeconds(), -nfreq);
 		line.setPosition(ntime * (snd.getPlayingOffset() / song.getDuration()), -nfreq);
 		draw_main();
 		win.draw(line);
-	//	if (show.hud) draw_hud();
 		win.display();
 	}
 }
@@ -100,6 +105,8 @@ void Spectrogram::ev_close(sf::Event ev) {
 }
 
 void Spectrogram::ev_keypress(sf::Event ev) {
+	if (ev.key.code == sf::Keyboard::LShift) show.cursor = true;
+	if (ev.key.code == sf::Keyboard::RShift) show.cursor = true;
 	if (ev.key.control) {
 		if (ev.key.code == sf::Keyboard::Q) win.close();
 		else if (ev.key.code == sf::Keyboard::Right) { conf.floor -= 0.25; makeSpectrogram(); }
@@ -108,7 +115,6 @@ void Spectrogram::ev_keypress(sf::Event ev) {
 		else if (ev.key.code == sf::Keyboard::Down) { conf.threshold += 0.25;  /* redraw overlay */ }
 	}
 	else if (ev.key.alt) {
-		if (ev.key.code == sf::Keyboard::C) win.setMouseCursorVisible(!(show.cursor=!show.cursor));
 		if (ev.key.code == sf::Keyboard::H) show.hud = !show.hud;
 		if (ev.key.code == sf::Keyboard::O) show.overlay = !show.overlay;
 		if (ev.key.code == sf::Keyboard::Num1) listen(1.0);
@@ -119,6 +125,11 @@ void Spectrogram::ev_keypress(sf::Event ev) {
 	}
 }
 
+void Spectrogram::ev_keyrelease(sf::Event ev) {
+	if (ev.key.code == sf::Keyboard::LShift) show.cursor = false;
+	if (ev.key.code == sf::Keyboard::RShift) show.cursor = false;
+}
+
 void Spectrogram::ev_resize(sf::Event ev) {
 	aspect = (ntime * win.getSize().y * conf.hop) / (float) (nfreq * win.getSize().x * conf.winlen);
 }
@@ -126,34 +137,94 @@ void Spectrogram::ev_resize(sf::Event ev) {
 void Spectrogram::ev_mousemove(sf::Event ev) {
 	sf::Vector2f prev = mouse;
 	mouse = win.mapPixelToCoords(sf::Vector2i(ev.mouseMove.x,ev.mouseMove.y));
-	if (mode == MOVE_RESIZE) {
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
-			view.setSize(view.getSize().x + prev.x - mouse.x, view.getSize().y + prev.y - mouse.y);
-			view.move((prev.x - mouse.x)/2.0, (prev.y - mouse.y)/2.0);
-		}
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-			view.move(prev.x - mouse.x, prev.y - mouse.y);
-		}
-		win.setView(view);
-		mouse = win.mapPixelToCoords(sf::Vector2i(ev.mouseMove.x,ev.mouseMove.y));
+
+	if (sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
+		view.setSize(view.getSize().x + prev.x - mouse.x, view.getSize().y + prev.y - mouse.y);
+		view.move((prev.x - mouse.x)/2.0, (prev.y - mouse.y)/2.0);
 	}
+	if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+		view.move(prev.x - mouse.x, prev.y - mouse.y);
+	}
+	win.setView(view);
+	mouse = win.mapPixelToCoords(sf::Vector2i(ev.mouseMove.x,ev.mouseMove.y));
+
 	if (mouse.x < 0) mouse.x = 0.0;
 	else if (mouse.x > ntime) mouse.x = ntime;
 	if (mouse.y > 0) mouse.y = 0.0;
 	else if (mouse.y < - nfreq) mouse.y = - nfreq;
 }
 
+void Spectrogram::checkModKeys() {
+	mod_ctrl = mod_shift = mod_alt = false;
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl)) mod_ctrl = true;
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::RControl)) mod_ctrl = true;
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)) mod_shift = true;
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::RShift)) mod_shift = true;
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt)) mod_alt = true;
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::RAlt)) mod_alt = true;
+}
+
 void Spectrogram::ev_button(sf::Event ev) {
-	switch (ev.mouseButton.button) {
+	checkModKeys();
+	sf::FloatRect rect;
+	/* Control + button combinations are for working with the threshold: */
+	if (mod_ctrl) switch (ev.mouseButton.button) {
+	}
+	/* Shift + button combinations are for working with the crop area: */
+	else if (mod_shift) switch (ev.mouseButton.button) {
+		/* set a crop window: requires 2 presses */
+		case sf::Mouse::Button::Left:
+			if (crop1.x < 0) crop1 = mouse;
+			else { setCrop(crop1, mouse); crop1.x = -1; }
+			break;
+		/* zoom to fit crop area to window */
+		case sf::Mouse::Button::Middle:
+			rect = getCrop();
+			rect.top -= rect.height * (1 + aspect) / 2.0;
+			rect.height *= aspect;
+			view.reset(rect);
+			win.setView(view);
+			break;
+		/* reset crop to full song */
+		case sf::Mouse::Button::Right:
+			crop1.x = -1;
+			setCrop(crop1, mouse);
+			break;
+	}
+	/* Alt + button combinations are for working with the eraser: */
+	else if (mod_alt) switch (ev.mouseButton.button) {
+	}
+	else switch (ev.mouseButton.button) {
+		/* NOTE: left and right are handled in ev_mousemove */
+		/* zoom to fit song to window */
 		case sf::Mouse::Button::Middle:
 			view.reset(sf::FloatRect(0, -nfreq * (1 + aspect)/2.0, ntime, nfreq * aspect));
+			win.setView(view);
 			break;
 	}
 }
 
 void Spectrogram::ev_wheel(sf::Event ev) {
-	if (ev.mouseWheelScroll.wheel == 0) { /* vertical */
-		// TODO, make 0.0075 step size customizable?
+	checkModKeys();
+	bool vert = (ev.mouseWheelScroll.wheel == 0);
+	/* Control + wheel combinations are for working with the threshold: */
+	if (mod_ctrl && vert) {
+		// TODO: threshold up/down
+	}
+	/* Shift + wheel combinations are for working with the crop area: */
+	else if (mod_shift) {
+		// TODO: anything here?  Probably not.
+	}
+	/* Alt + wheel combinations are for working with the eraser: */
+	else if (mod_alt && vert) {
+		// TODO: size up/down
+	}
+	else if (mod_alt) {
+		// TODO: shape left/right
+	}
+	/* No modifier wheel movements are for zooming: */
+	else if (vert) {
+		// TODO: make 0.0075 step size customizable?
 		float vx = view.getSize().x / ntime, vy = view.getSize().y / nfreq;
 		float dx = ev.mouseWheelScroll.delta;
 		if (dx < 0 && vx > 1.20 && vy > 1.20) return;
@@ -162,29 +233,4 @@ void Spectrogram::ev_wheel(sf::Event ev) {
 		win.setView(view);
 	}
 }
-
-/*
-void Spectrogram::draw_hud() {
-	float w = view.getSize().x, h = view.getSize().y;
-	float x = view.getCenter().x - w / 2.0, y = view.getCenter().y - h / 2.0;
-	sf::RectangleShape shape(sf::Vector2f(w, h * 0.036));
-	shape.setPosition(x, y);
-	shape.setFillColor(sf::Color(0, 0, 128,100));
-	win.draw(shape);
-	char out[256];
-	sf::Text text;
-	text.setFont(font); text.setCharacterSize(28); text.setColor(sf::Color(255,255,255,200)); text.setScale(w/1000,h/1000);
-	snprintf(out,255," FE: %0.3f", 123.456789);
-	text.setString(out);
-	text.setPosition(x, y);
-	win.draw(text);
-	snprintf(out,255,"(%0.3fs, %0.3fKHz) ",
-		song.getDuration().asSeconds() * mouse.x / ntime,
-		conf.lopass - (conf.hipass - conf.lopass) * mouse.y / nfreq
-	);
-	text.setString(out);
-	text.setPosition(x + w - text.getGlobalBounds().width, y);
-	win.draw(text);
-}
-*/
 

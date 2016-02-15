@@ -20,6 +20,7 @@ class Config {
 			sf::Color pointFG    = sf::Color(0x33,0x99,0xFF);
 			sf::Color pointBG    = sf::Color(0x33,0x99,0xFF,0x48);
 			sf::Color linesFG    = sf::Color(0xE8,0x68,0x50);
+			sf::Color cursorFG   = sf::Color(0xFF,0x00,0x00,0xAA);
 		} conf;
 		struct {
 			bool cursor       = false;
