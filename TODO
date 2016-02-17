@@ -1,5 +1,4 @@
 
-- change function names to camelCase in spectrogram
 x Add eraser function to spectrogram module
 	- needs testing
 - Add log transformation to frequency?

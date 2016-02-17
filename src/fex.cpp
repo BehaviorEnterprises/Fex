@@ -3,6 +3,6 @@
 
 int main(int argc, char *const *argv) {
 	Spectrogram spec(argc, argv);
-	spec.main_loop();
+	spec.mainLoop();
 	return EXIT_SUCCESS;
 }

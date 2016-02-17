@@ -15,24 +15,24 @@ class Spectrogram : public Fft {
 		bool mod_ctrl, mod_shift, mod_alt;
 		float aspect;
 
-		void draw_main();
-		void draw_cursor(float, float);
-		void draw_hud();
+		void drawMain();
+		void drawCursor(float, float);
+		void drawHud();
 		void erase();
 
 		void checkModKeys();
-		void ev_handler(sf::Event);
-		void ev_close(sf::Event);
-		void ev_keypress(sf::Event);
-		void ev_keyrelease(sf::Event);
-		void ev_mousemove(sf::Event);
-		void ev_resize(sf::Event);
-		void ev_button(sf::Event);
-		void ev_wheel(sf::Event);
+		void evHandler(sf::Event);
+		void evClose(sf::Event);
+		void evKeyPress(sf::Event);
+		void evKeyRelease(sf::Event);
+		void evMouseButton(sf::Event);
+		void evMouseMove(sf::Event);
+		void evMouseWheel(sf::Event);
+		void evResize(sf::Event);
 	protected:
 		void listen(float=1.0);
 	public:
-		int main_loop();
+		int mainLoop();
 		Spectrogram(int, char *const *);
 		~Spectrogram();
 };

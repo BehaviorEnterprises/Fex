@@ -32,15 +32,15 @@ Spectrogram::Spectrogram(int argc, char *const *argv) : Fft(argc, argv) {
 
 Spectrogram::~Spectrogram() { }
 
-int Spectrogram::main_loop() {
+int Spectrogram::mainLoop() {
 	sf::Event ev;
 	while (win.isOpen() && win.waitEvent(ev)) {
-		ev_handler(ev);
-		while (win.pollEvent(ev)) ev_handler(ev);
-		draw_main();
+		evHandler(ev);
+		while (win.pollEvent(ev)) evHandler(ev);
+		drawMain();
 		if (show.cursor) {
-			if (crop1.x > 0) draw_cursor(crop1.x, crop1.y);
-			draw_cursor(mouse.x, mouse.y);
+			if (crop1.x > 0) drawCursor(crop1.x, crop1.y);
+			drawCursor(mouse.x, mouse.y);
 		}
 		win.display();
 		char out[256];
@@ -56,19 +56,19 @@ int Spectrogram::main_loop() {
 	return 0;
 }
 
-void Spectrogram::ev_handler(sf::Event ev) {
+void Spectrogram::evHandler(sf::Event ev) {
 	switch (ev.type) {
-		case sf::Event::Closed: ev_close(ev); break;
-		case sf::Event::KeyPressed: ev_keypress(ev); break;
-		case sf::Event::KeyReleased: ev_keyrelease(ev); break;
-		case sf::Event::MouseMoved: ev_mousemove(ev); break;
-		case sf::Event::MouseButtonPressed: ev_button(ev); break;
-		case sf::Event::MouseWheelScrolled: ev_wheel(ev); break;
-		case sf::Event::Resized: ev_resize(ev); break;
+		case sf::Event::Closed: evClose(ev); break;
+		case sf::Event::KeyPressed: evKeyPress(ev); break;
+		case sf::Event::KeyReleased: evKeyRelease(ev); break;
+		case sf::Event::MouseMoved: evMouseMove(ev); break;
+		case sf::Event::MouseButtonPressed: evMouseButton(ev); break;
+		case sf::Event::MouseWheelScrolled: evMouseWheel(ev); break;
+		case sf::Event::Resized: evResize(ev); break;
 	}
 }
 
-void Spectrogram::draw_main() {
+void Spectrogram::drawMain() {
 	win.clear(conf.winBG);
 	win.draw(back);
 	win.draw(spec);
@@ -81,7 +81,7 @@ void Spectrogram::draw_main() {
 	}
 }
 
-void Spectrogram::draw_cursor(float x, float y) {
+void Spectrogram::drawCursor(float x, float y) {
 	// TODO get config cursor color
 	sf::RectangleShape lineV(sf::Vector2f(1, nfreq));
 	lineV.setFillColor(conf.cursorFG);
@@ -101,16 +101,16 @@ void Spectrogram::listen(float speed) {
 		sf::RectangleShape line(sf::Vector2f(10, nfreq));
 		line.setFillColor(sf::Color(0,255,0,120));
 		line.setPosition(ntime * (snd.getPlayingOffset() / song.getDuration()), -nfreq);
-		draw_main();
+		drawMain();
 		win.draw(line);
 		win.display();
 	}
 }
 
-void Spectrogram::ev_close(sf::Event ev) {
+void Spectrogram::evClose(sf::Event ev) {
 }
 
-void Spectrogram::ev_keypress(sf::Event ev) {
+void Spectrogram::evKeyPress(sf::Event ev) {
 	if (ev.key.code == sf::Keyboard::LShift) show.cursor = true;
 	if (ev.key.code == sf::Keyboard::RShift) show.cursor = true;
 	if (ev.key.control) {
@@ -131,16 +131,16 @@ void Spectrogram::ev_keypress(sf::Event ev) {
 	}
 }
 
-void Spectrogram::ev_keyrelease(sf::Event ev) {
+void Spectrogram::evKeyRelease(sf::Event ev) {
 	if (ev.key.code == sf::Keyboard::LShift) show.cursor = false;
 	if (ev.key.code == sf::Keyboard::RShift) show.cursor = false;
 }
 
-void Spectrogram::ev_resize(sf::Event ev) {
+void Spectrogram::evResize(sf::Event ev) {
 	aspect = (ntime * win.getSize().y * conf.hop) / (float) (nfreq * win.getSize().x * conf.winlen);
 }
 
-void Spectrogram::ev_mousemove(sf::Event ev) {
+void Spectrogram::evMouseMove(sf::Event ev) {
 		sf::Vector2f prev = mouse;
 		mouse = win.mapPixelToCoords(sf::Vector2i(ev.mouseMove.x,ev.mouseMove.y));
 	checkModKeys();
@@ -194,7 +194,7 @@ void Spectrogram::erase() {
 	makeOverlay();
 }
 
-void Spectrogram::ev_button(sf::Event ev) {
+void Spectrogram::evMouseButton(sf::Event ev) {
 	checkModKeys();
 	sf::FloatRect rect;
 	/* Control + button combinations are for working with the threshold: */
@@ -226,7 +226,7 @@ void Spectrogram::ev_button(sf::Event ev) {
 		case sf::Mouse::Button::Left: erase(); break;
 	}
 	else switch (ev.mouseButton.button) {
-		/* NOTE: left and right are handled in ev_mousemove */
+		/* NOTE: left and right are handled in evMouseMove */
 		/* zoom to fit song to window */
 		case sf::Mouse::Button::Middle:
 			view.reset(sf::FloatRect(0, -nfreq * (1 + aspect)/2.0, ntime, nfreq * aspect));
@@ -235,7 +235,7 @@ void Spectrogram::ev_button(sf::Event ev) {
 	}
 }
 
-void Spectrogram::ev_wheel(sf::Event ev) {
+void Spectrogram::evMouseWheel(sf::Event ev) {
 	checkModKeys();
 	bool vert = (ev.mouseWheelScroll.wheel == 0);
 	float dx = ev.mouseWheelScroll.delta;
