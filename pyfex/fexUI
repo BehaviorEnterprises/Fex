@@ -16,6 +16,7 @@ args = [
 	'--hiPass=' +     conf['high pass'],
 	'--threshold=' +  conf['threshold'],
 	'--floor=' +      conf['floor'],
+	'--log10=' +      conf['log transform'],
 	'--winBG=' +      col['window background'],
 	'--specBG=' +     col['spectrogram background'],
 	'--specFG=' +     col['spectrogram foreground'],
@@ -23,6 +24,7 @@ args = [
 	'--pointBG=' +    col['point fill'],
 	'--pointFG=' +    col['point border'],
 	'--linesFG=' +    col['lines']
+	'--cursorFG=' +   col['cursor']
 ]
 
 def run_fex(files):

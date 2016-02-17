@@ -13,6 +13,7 @@ class Config {
 			double hipass        = 10.00;
 			double threshold     = 18.00;
 			double floor         = 24.00;
+			bool log10           = false;
 			sf::Color winBG      = sf::Color(0x60,0x64,0x68);
 			sf::Color specBG     = sf::Color(0xFF,0xFF,0xFF);
 			sf::Color specFG     = sf::Color(0x00,0x00,0x00);

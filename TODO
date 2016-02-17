@@ -1,8 +1,8 @@
 
+- eraser control (toggle on / off)
+	- bring back "modes"?
 x Add eraser function to spectrogram module
 	- needs testing
-- Add log transformation to frequency?
-- Add cursorFG to config.cpp and python code
 - Too many "magic numbers" for eraser sizes...
 x Implement config file reading
 	* offloaded to pyfex

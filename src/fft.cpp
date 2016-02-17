@@ -156,7 +156,8 @@ void Fft::makeOverlay() {
 		}
 		if (max < -1.0 * conf.threshold) continue;
 		if (n) { /* increment lengths for fex calculation for all but first point */
-			pathLength += hypot(freq[fmax]-pf,time[t]-pt);
+			if (conf.log10) pathLength += hypot(log10(freq[fmax])-log10(pf),time[t]-pt);
+			else pathLength += hypot(freq[fmax]-pf,time[t]-pt);
 			timeLength += time[t]-pt;
 		}
 		pf = freq[fmax]; pt = time[t];
