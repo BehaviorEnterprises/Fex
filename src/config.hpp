@@ -24,10 +24,10 @@ class Config {
 			sf::Color cursorFG   = sf::Color(0xFF,0x00,0x00,0xAA);
 		} conf;
 		struct {
-			bool cursor       = false;
-			bool hud          = true;
 			bool overlay      = true;
-		} show;
+			bool cursor       = false;
+			bool eraser       = false;
+		} toggle;
 		char *fname = NULL, *name = NULL;
 
 	public:

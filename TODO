@@ -1,6 +1,4 @@
 
-- eraser control (toggle on / off)
-	- bring back "modes"?
 x Add eraser function to spectrogram module
 	- needs testing
 - Too many "magic numbers" for eraser sizes...
@@ -9,4 +7,12 @@ x Implement config file reading
 	* fex only uses command line parameters
 	* this makes porting across platforms easier
 		* at least for me: I have no idea where a Win user would keep config files.
+- Complete the python front end
+	x Parse config (ini) file to pass CLI parameters to fex binary
+	- Show file selection dialogs for chosing songs, and saving data
+	- Make either UI agnostic, or seperate versions for GTK, QT, etc
+		- Are there Win / Mac native python dialog APIs?
+			- Or do these need to use GTK/QT or Tk/Wx/...
+	- Need input from python coders (pull requests welcomed!)
+
 

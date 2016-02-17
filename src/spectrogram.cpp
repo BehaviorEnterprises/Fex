@@ -38,10 +38,6 @@ int Spectrogram::mainLoop() {
 		evHandler(ev);
 		while (win.pollEvent(ev)) evHandler(ev);
 		drawMain();
-		if (show.cursor) {
-			if (crop1.x > 0) drawCursor(crop1.x, crop1.y);
-			drawCursor(mouse.x, mouse.y);
-		}
 		win.display();
 		char out[256];
 		snprintf(out,255,"%s - (%0.3fs, %0.3fKHz) FE: %lf ",
@@ -73,16 +69,20 @@ void Spectrogram::drawMain() {
 	win.draw(back);
 	win.draw(spec);
 	thresh.setColor(conf.threshFG);
-	if (show.overlay) {
+	if (toggle.overlay) {
 		win.draw(thresh);
 		win.draw(getPoints(), &ball);
 		win.draw(getLines());
-		win.draw(eraser);
+		if (toggle.cursor) {
+			if (crop1.x > 0) drawCursor(crop1.x, crop1.y);
+			drawCursor(mouse.x, mouse.y);
+		}
+		if (toggle.eraser)
+			win.draw(eraser);
 	}
 }
 
 void Spectrogram::drawCursor(float x, float y) {
-	// TODO get config cursor color
 	sf::RectangleShape lineV(sf::Vector2f(1, nfreq));
 	lineV.setFillColor(conf.cursorFG);
 	lineV.setPosition(view.getViewport().left + x, -nfreq);
@@ -111,29 +111,36 @@ void Spectrogram::evClose(sf::Event ev) {
 }
 
 void Spectrogram::evKeyPress(sf::Event ev) {
-	if (ev.key.code == sf::Keyboard::LShift) show.cursor = true;
-	if (ev.key.code == sf::Keyboard::RShift) show.cursor = true;
-	if (ev.key.control) {
-		if (ev.key.code == sf::Keyboard::Q) win.close();
-		else if (ev.key.code == sf::Keyboard::Right) { conf.floor -= 0.25; makeSpectrogram(); }
-		else if (ev.key.code == sf::Keyboard::Left) { conf.floor += 0.25; makeSpectrogram(); }
-		else if (ev.key.code == sf::Keyboard::Up) { conf.threshold -= 0.25;  /* redraw overlay */ }
-		else if (ev.key.code == sf::Keyboard::Down) { conf.threshold += 0.25;  /* redraw overlay */ }
+	if (ev.key.code == sf::Keyboard::LShift) toggle.cursor = !toggle.cursor;
+	if (ev.key.code == sf::Keyboard::RShift) toggle.cursor = !toggle.cursor;
+	if (ev.key.code == sf::Keyboard::LAlt) toggle.eraser = !toggle.eraser;
+	if (ev.key.code == sf::Keyboard::RAlt) toggle.eraser = !toggle.eraser;
+	if (ev.key.control) switch (ev.key.code) {
+		case sf::Keyboard::Space: toggle.overlay = !toggle.overlay; break;
+		case sf::Keyboard::Right: conf.floor -= 0.25; makeSpectrogram(); break;
+		case sf::Keyboard::Left: conf.floor += 0.25; makeSpectrogram(); break;
+		case sf::Keyboard::Up: conf.threshold -= 0.25;  makeOverlay(); break;
+		case sf::Keyboard::Down: conf.threshold += 0.25;  makeOverlay(); break;
+		case sf::Keyboard::Q: win.close(); break;
+		case sf::Keyboard::Num1: listen(1.0); break;
+		case sf::Keyboard::Num2: listen(0.5); break;
+		case sf::Keyboard::Num3: listen(0.333); break;
+		case sf::Keyboard::Num4: listen(0.25); break;
+		case sf::Keyboard::Num5: listen(0.2); break;
 	}
-	else if (ev.key.alt) {
-		if (ev.key.code == sf::Keyboard::H) show.hud = !show.hud;
-		if (ev.key.code == sf::Keyboard::O) show.overlay = !show.overlay;
-		if (ev.key.code == sf::Keyboard::Num1) listen(1.0);
-		if (ev.key.code == sf::Keyboard::Num2) listen(0.5);
-		if (ev.key.code == sf::Keyboard::Num3) listen(0.333);
-		if (ev.key.code == sf::Keyboard::Num4) listen(0.25);
-		if (ev.key.code == sf::Keyboard::Num5) listen(0.2);
+	else if (ev.key.alt) switch (ev.key.code) {
+		case sf::Keyboard::Space: toggle.eraser = !toggle.eraser; break;
+	}
+	if (ev.key.shift) switch (ev.key.code) {
+		case sf::Keyboard::Space: toggle.cursor = !toggle.cursor; break;
 	}
 }
 
 void Spectrogram::evKeyRelease(sf::Event ev) {
-	if (ev.key.code == sf::Keyboard::LShift) show.cursor = false;
-	if (ev.key.code == sf::Keyboard::RShift) show.cursor = false;
+	if (ev.key.code == sf::Keyboard::LShift) toggle.cursor = !toggle.cursor;
+	if (ev.key.code == sf::Keyboard::RShift) toggle.cursor = !toggle.cursor;
+	if (ev.key.code == sf::Keyboard::LAlt) toggle.eraser = !toggle.eraser;
+	if (ev.key.code == sf::Keyboard::RAlt) toggle.eraser = !toggle.eraser;
 }
 
 void Spectrogram::evResize(sf::Event ev) {
@@ -141,15 +148,13 @@ void Spectrogram::evResize(sf::Event ev) {
 }
 
 void Spectrogram::evMouseMove(sf::Event ev) {
-		sf::Vector2f prev = mouse;
-		mouse = win.mapPixelToCoords(sf::Vector2i(ev.mouseMove.x,ev.mouseMove.y));
-	checkModKeys();
-	if (mod_ctrl) {
+	sf::Vector2f prev = mouse;
+	mouse = win.mapPixelToCoords(sf::Vector2i(ev.mouseMove.x,ev.mouseMove.y));
+	if (toggle.overlay && toggle.cursor) {
+		//
 	}
-	else if (mod_shift) {
-	}
-	else if (mod_alt) {
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) erase();
+	else if (toggle.overlay && toggle.eraser) {
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && toggle.eraser) erase();
 	}
 	else {
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
@@ -162,21 +167,13 @@ void Spectrogram::evMouseMove(sf::Event ev) {
 		win.setView(view);
 	}
 	mouse = win.mapPixelToCoords(sf::Vector2i(ev.mouseMove.x,ev.mouseMove.y));
-	if (mouse.x < 0) mouse.x = 0.0;
-	else if (mouse.x > ntime) mouse.x = ntime;
-	if (mouse.y > 0) mouse.y = 0.0;
-	else if (mouse.y < - nfreq) mouse.y = - nfreq;
-	eraser.setPosition(mouse);
-}
-
-void Spectrogram::checkModKeys() {
-	mod_ctrl = mod_shift = mod_alt = false;
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl)) mod_ctrl = true;
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::RControl)) mod_ctrl = true;
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)) mod_shift = true;
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::RShift)) mod_shift = true;
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt)) mod_alt = true;
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::RAlt)) mod_alt = true;
+	float in_bounds = 1.0;
+	if (mouse.x < 0) in_bounds = mouse.x = 0.0;
+	else if (mouse.x > ntime) in_bounds = mouse.x = ntime;
+	if (mouse.y > 0) in_bounds = mouse.y = 0.0;
+	else if (mouse.y < - nfreq) in_bounds = mouse.y = - nfreq;
+	if (in_bounds == 1.0) eraser.setPosition(mouse);
+	else eraser.setPosition(sf::Vector2f(-ntime,nfreq));
 }
 
 void Spectrogram::erase() {
@@ -195,13 +192,8 @@ void Spectrogram::erase() {
 }
 
 void Spectrogram::evMouseButton(sf::Event ev) {
-	checkModKeys();
 	sf::FloatRect rect;
-	/* Control + button combinations are for working with the threshold: */
-	if (mod_ctrl) switch (ev.mouseButton.button) {
-	}
-	/* Shift + button combinations are for working with the crop area: */
-	else if (mod_shift) switch (ev.mouseButton.button) {
+	if (toggle.overlay && toggle.cursor) switch (ev.mouseButton.button) {
 		/* set a crop window: requires 2 presses */
 		case sf::Mouse::Button::Left:
 			if (crop1.x < 0) crop1 = mouse;
@@ -221,9 +213,8 @@ void Spectrogram::evMouseButton(sf::Event ev) {
 			setCrop(crop1, mouse);
 			break;
 	}
-	/* Alt + button combinations are for working with the eraser: */
-	else if (mod_alt) switch (ev.mouseButton.button) {
-		case sf::Mouse::Button::Left: erase(); break;
+	else if (toggle.overlay && toggle.eraser) switch (ev.mouseButton.button) {
+		case sf::Mouse::Button::Left: if (toggle.eraser) erase(); break;
 	}
 	else switch (ev.mouseButton.button) {
 		/* NOTE: left and right are handled in evMouseMove */
@@ -236,20 +227,15 @@ void Spectrogram::evMouseButton(sf::Event ev) {
 }
 
 void Spectrogram::evMouseWheel(sf::Event ev) {
-	checkModKeys();
 	bool vert = (ev.mouseWheelScroll.wheel == 0);
 	float dx = ev.mouseWheelScroll.delta;
-	/* Control + wheel combinations are for working with the threshold: */
-	if (mod_ctrl && vert) {
-		// TODO: threshold up/down
-	}
-	/* Shift + wheel combinations are for working with the crop area: */
-	else if (mod_shift) {
+	if (toggle.overlay && toggle.cursor) {
 		// TODO: anything here?  Probably not.
 	}
-	/* Alt + wheel combinations are for working with the eraser: */
-	else if (mod_alt && vert) {
-		// TODO: size up/down
+	if (toggle.overlay && toggle.eraser) {
+		/* rotate */
+		if (!vert) { eraser.rotate(-dx); return; }
+		/* or scale */
 		sf::Vector2f scale = eraser.getScale();
 		float r = eraser.getRotation();
 		if (r < 30 || r > 330 || (r > 150 && r < 210) )
@@ -265,9 +251,6 @@ void Spectrogram::evMouseWheel(sf::Event ev) {
 		if (scale.y < 0.5) scale.y = 0.5;
 		else if (scale.y > 5.0) scale.y = 5.0;
 		eraser.setScale(scale);
-	}
-	else if (mod_alt && !vert) {
-		eraser.rotate(-dx);
 	}
 	/* No modifier wheel movements are for zooming: */
 	else if (vert) {
