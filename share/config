@@ -39,11 +39,10 @@ set window     = hanning
 set fontFamily = droid sans
 set fontSize	= 14
 set help       = xterm -e man fex-help
-## CAUTION: logFreq was added by user request.  While the option will accurately
-## log (base 10) transform frequencies as requested, I have not done any testing
-## on whether this produces reasonable results.  Using this option is strongly
-## discouraged until it has been thoroughly tested and found to give reasonable
-## results.
+## CAUTION: logFreq was added by user request.  While the option will log (base 10)
+## transform frequencies. I have not done any testing on whether this produces
+## reasonable results.  Using this option is discouraged # until it has been more
+## well tested.
 set logFreq    = false
 
 ## Colors
